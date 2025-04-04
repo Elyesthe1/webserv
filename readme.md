@@ -4,7 +4,7 @@ socket = connecteur reseau (bas nv lie au system d'exploitation) permet d'etabli
 int socket(int domain, int type, int protocol)
 https://tala-informatique.fr/index.php?title=C_socket
 https://man7.org/linux/man-pages/man2/socket.2.html
-(https://tala-informatique.fr/images/c/cd/Socket_workflow.png)
+![Workflow Socket](https://tala-informatique.fr/images/c/cd/Socket_workflow.png)
 
 
 int setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t optlen)
