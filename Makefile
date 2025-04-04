@@ -5,6 +5,11 @@ RM = rm -f
 NAME = webserv
 
 SRCS = srcs/main.cpp \
+	   srcs/Config/Config.cpp \
+	   srcs/ServerWeb/ServerWeb.cpp \
+	   srcs/ServerWeb/Socket/Socket.cpp \
+
+	
 
 OBJS = $(SRCS:.cpp=.o)
 

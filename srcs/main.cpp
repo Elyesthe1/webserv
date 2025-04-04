@@ -1,7 +1,8 @@
 #include "../includes/Config.hpp"
+#include "../includes/ServerWeb.hpp"
+
 
 int main(int ac, char **av)
 {
-    
-    Config conf(ac, av);
+    ServerWeb serv(ac, av);
 }

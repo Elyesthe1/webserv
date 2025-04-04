@@ -7,7 +7,7 @@ Config::Config(int ac, char **av)
         std::ifstream default_conf("conf/default.conf");
         if (!default_conf)
         {
-            std::cerr << "conf error" << std::endl;
+            std::cerr << "Erreur : Aucun fichier de configuration trouvé." << std::endl;
             exit(1);
         }
     }

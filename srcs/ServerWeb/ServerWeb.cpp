@@ -1,10 +1,5 @@
 #include "../../includes/ServerWeb.hpp"
 
-ServerWeb::ServerWeb()
+ServerWeb::ServerWeb(int ac, char **av): config(ac, av)
 {
-    if((this->socketFD = socket(AF_INET, SOCK_STREAM, 0)) == -1)
-    {
-        std::cerr << "Error: Failed to create socket (server): " << strerror(errno) << std::endl;
-        exit(errno);
-    }
 }
