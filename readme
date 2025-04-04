@@ -1,6 +1,0 @@
-socket = connecteur reseau (bas nv lie au system d'exploitation) permet d'etablir connection entre deux processus 
-    - de flux (TCP):  connection, fiable(verification de la reception donne), bidirectionnel, ordonne
-    - de datagram (UDP) : pas de connection, pas fiable, mais plus rapide (utilise pour jeux en ligne)
-int socket(int domain, int type, int protocol)
-https://tala-informatique.fr/index.php?title=C_socket
-https://man7.org/linux/man-pages/man2/socket.2.html
