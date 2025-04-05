@@ -1,6 +1,6 @@
 #include "../../includes/Config.hpp"
 #include <netinet/ip.h>
-struct sockaddr_in Config::Getaddr() {return this->address;}
+const struct sockaddr_in& Config::Getaddr() const {return this->address;}
 
 Config::Config(int ac, char **av)
 {

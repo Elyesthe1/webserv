@@ -2,47 +2,57 @@
 
 Socket::Socket(Config &config)
 {
-    if (!this->create(config))
+    try
+    {
+        this->InitSocket(config);
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << std::endl;
         exit(EXIT_FAILURE);
-    if (!this->Setsocketop(config))
-        exit(EXIT_FAILURE);
-    if (!this->Bind(config))
-        exit(EXIT_FAILURE);
-    if (!this->Listen(config))
-        exit(EXIT_FAILURE);
+    }   
 }
 
-bool Socket::Listen(Config &config)
+void Socket::InitSocket(Config &config) 
 {
-    if(listen(this->socketFD, ))
+    this->CreateSocket(config);
+    this->SetSocketOp(config);
+    this->BindSocket(config);
+    this->Listen(config);
 }
 
-bool Socket::Bind(Config &config)
+
+void Socket::Listen(Config &config) const
+{
+    if(listen(this->socketFD, 10) == -1)
+        throw std::runtime_error("Error: Failed to Listen the socket: " + std::string(strerror(errno)));
+}
+
+void Socket::BindSocket(Config &config) const
 {
     if (bind(this->socketFD, (struct sockaddr*)&config.Getaddr(), sizeof(config.Getaddr())) == - 1)
-    {
-        std::cerr << "Error: Failed to bind the socket: " << strerror(errno) << std::endl;
-        return false;
-    }
-    return true;
+        throw std::runtime_error("Error: Failed to bind the socket: " + std::string(strerror(errno)));
 }
-bool Socket::create(Config &config)
+void Socket::CreateSocket(Config &config)
 {
     if((this->socketFD = socket(AF_INET, SOCK_STREAM, 0)) == -1)
-    {
-        std::cerr << "Error: Failed to create socket: " << strerror(errno) << std::endl;
-        return false;
-    }
-    return true;
+        throw std::runtime_error("Error: Failed to create socket: " + std::string(strerror(errno)));
 }
-
-bool Socket::Setsocketop(Config &config)
+// pas encore sure sure de cette fonction a voir, celon le fichier conf et tout
+void Socket::SetSocketOp(Config &config) const
 {
     int option = 1;
     if (setsockopt(this->socketFD, IPPROTO_TCP, TCP_NODELAY, &option, sizeof(option)) == -1) 
-    {
-        std::cerr << "Error: Failed to set socket option: " << strerror(errno) << std::endl;
-        return false;
-    }
-    return true;
+        throw std::runtime_error("Error: Failed to set socket option: " + std::string(strerror(errno)));
+}
+
+void Socket::CloseSocket()
+{
+    if (this->socketFD != -1)
+        close(this->socketFD);
+}
+
+Socket::~Socket()
+{
+    this->CloseSocket();
 }

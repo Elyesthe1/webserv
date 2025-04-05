@@ -5,14 +5,19 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include "Config.hpp"
+#include <exception>
+#include <unistd.h>
 class Socket
 {
     public:
         Socket(Config &config);
+        ~Socket();
     private:
-        bool Listen(Config &config);
-        bool Bind(Config &config);
-        bool Setsocketop(Config &config);
-        bool create(Config &config);
+        void CloseSocket();
+        void InitSocket(Config &config);
+        void Listen(Config &config) const ;
+        void BindSocket(Config &config) const ;
+        void SetSocketOp(Config &config) const;
+        void CreateSocket(Config &config);
         int socketFD;
 };
