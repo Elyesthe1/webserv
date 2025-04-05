@@ -22,3 +22,6 @@ struct sockaddr_in {
     char             sin_zero[8];  // Rempli avec des zéros (non utilisé)
 };
 
+int listen(int sockfd, int backlog) permet de mettre sont socket en en ecoute pour recevoir des connexion 
+backlog (lorsque que le serv recoie une co, le met en attente dans une file d'attente avant un accept) permet de definir la taille de la file d'attente
+

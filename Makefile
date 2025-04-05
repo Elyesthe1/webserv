@@ -9,8 +9,6 @@ SRCS = srcs/main.cpp \
 	   srcs/ServerWeb/ServerWeb.cpp \
 	   srcs/ServerWeb/Socket/Socket.cpp \
 
-	
-
 OBJS = $(SRCS:.cpp=.o)
 
 all: $(NAME)
