@@ -74,7 +74,7 @@ Cette fonction **met le socket en écoute** pour recevoir des connexions entrant
 
 ---
 
-## 🧠 Schéma explicatif du workflow socket
+## 🧠 Schéma explicatif
 
 ![Workflow Socket](https://tala-informatique.fr/images/c/cd/Socket_workflow.png)
 

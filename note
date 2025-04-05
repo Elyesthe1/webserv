@@ -1,0 +1,22 @@
+socketpair : permet de creer une pair de socket connecter 
+
+htons en gros convertie un entier 16bit en un format utiliser pour le reseau
+htonl un entier 32 bit ...
+ntohs pour unsigned 32
+ntohs pour unsigned 16
+
+fonction pour surveillers plusieurs fd de maniere non bloquante, en attendant qu``il soit pret pour lecture, ecriture ou si ils sont des exeption:
+select :le plus ancien, limite de fd definie par FD_SETSIZE(1024), pas tres performant
+poll: pas de limite de fd, plus flexible permet de gerer + facilement un grand nombre de fd, pas tres performant
+epoll: la plus recent, pas de limite, la plus opti pour gerer grand nombre de fd, tres performant, reserver sur linux
+kqueue : epoll mais sur macOS   
+
+accept : permet d''accepter une connection entrante et recevoir un socket pour communiquer avec le client 
+send : permet denvoyer des donne au client avec un socket quon a accepter
+recv : permet de lire des donne     
+connect: permet une connection un server via un socket 
+
+getaddrinfo : convertie un nom d hote ou address ip en une struct sockeaddr pour pouvoir se connecter a un server
+getsockname : permet dobtenir des info via un socket, comme le port lie a celui ci ou l adresse ip
+getprotobyname : permet dobetenir des info d un protocol reseau via sont nom 
+fcntl: permet de changer propriete ou comportement des fd
