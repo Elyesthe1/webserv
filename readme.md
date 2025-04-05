@@ -1,27 +1,54 @@
-socket = connecteur reseau (bas nv lie au system d'exploitation) permet d'etablir connection entre deux processus 
-    - de flux (TCP):  connection, fiable(verification de la reception donne), bidirectionnel, ordonne
-    - de datagram (UDP) : pas de connection, pas fiable, mais plus rapide (utilise pour jeux en ligne)
-int socket(int domain, int type, int protocol)
-https://tala-informatique.fr/index.php?title=C_socket
-https://man7.org/linux/man-pages/man2/socket.2.html
-![Workflow Socket](https://tala-informatique.fr/images/c/cd/Socket_workflow.png)
+# 🌐 Socket - Serveur Web en C++
 
+Ce projet vise à créer un serveur web en C++98 en utilisant les sockets bas-niveau du système d'exploitation.
 
-int setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t optlen)
-permet de mettre des option de socket, pas obligatoire mais permet d'eviter certaine erreur et + opti car tu regle des options qui permet d'etre + specifique
+---
 
-int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
-permet d'atacher un socket avec un port internet et une ip 
+## 🔌 Qu'est-ce qu'un Socket ?
 
-il faut utiliser la struc :
-cette struc permet de stocker des info
+Un **socket** est un **connecteur réseau** (niveau bas) permettant d'établir une **connexion entre deux processus**.
+
+### Types de sockets :
+- **Flux (TCP)** :
+  - Connexion établie
+  - Fiable (vérifie la réception des données)
+  - Bidirectionnel
+  - Ordonné
+- **Datagramme (UDP)** :
+  - Pas de connexion
+  - Non fiable
+  - Très rapide (utilisé pour les jeux en ligne, etc.)
+
+---
+
+## ⚙️ Fonctions essentielles
+
+### `int socket(int domain, int type, int protocol)`
+Crée un socket :
+- `domain` : ex. `AF_INET` (IPv4)
+- `type` : `SOCK_STREAM` (TCP) ou `SOCK_DGRAM` (UDP)
+- `protocol` : généralement `0` (choix automatique)
+
+📄 [Voir la doc officielle](https://man7.org/linux/man-pages/man2/socket.2.html)  
+📘 [Article explicatif](https://tala-informatique.fr/index.php?title=C_socket)
+
+---
+
+### `int setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t optlen)`
+Permet de **configurer certaines options du socket** :
+- Pas obligatoire, mais souvent utilisé pour éviter des erreurs ou améliorer les performances.
+- Exemple : `SO_REUSEADDR`, `TCP_NODELAY`, etc.
+
+---
+
+### `int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen)`
+Associe un **socket à une adresse IP et un port**.
+
+### 📦 Structure `sockaddr_in`
+```c
 struct sockaddr_in {
     short            sin_family;   // Type d'adresse (ex: AF_INET pour IPv4)
-    unsigned short   sin_port;     // Numéro du port (doit être converti avec htons)
-    struct in_addr   sin_addr;     // Adresse IP (ex: 192.168.1.1)
-    char             sin_zero[8];  // Rempli avec des zéros (non utilisé)
+    unsigned short   sin_port;     // Port (converti avec htons)
+    struct in_addr   sin_addr;     // Adresse IP (ex: 127.0.0.1)
+    char             sin_zero[8];  // Padding (non utilisé)
 };
-
-int listen(int sockfd, int backlog) permet de mettre sont socket en en ecoute pour recevoir des connexion 
-backlog (lorsque que le serv recoie une co, le met en attente dans une file d'attente avant un accept) permet de definir la taille de la file d'attente
-
