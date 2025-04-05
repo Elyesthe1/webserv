@@ -1,54 +1,86 @@
-# 🌐 Socket - Serveur Web en C++
 
-Ce projet vise à créer un serveur web en C++98 en utilisant les sockets bas-niveau du système d'exploitation.
+# 🌐 Web Server en C++98
+
+Ce projet a pour but de créer un **serveur web** en **C++98** en utilisant les **sockets bas niveau** du système d’exploitation.
 
 ---
 
-## 🔌 Qu'est-ce qu'un Socket ?
+## 🔌 C’est quoi un Socket ?
 
-Un **socket** est un **connecteur réseau** (niveau bas) permettant d'établir une **connexion entre deux processus**.
+Un **socket**, c’est un **connecteur réseau** bas-niveau (lié au système d’exploitation) qui permet d’établir une connexion entre deux processus.
 
-### Types de sockets :
-- **Flux (TCP)** :
-  - Connexion établie
+### Types de socket :
+- **Socket de flux (TCP)** :
+  - Avec connexion
   - Fiable (vérifie la réception des données)
   - Bidirectionnel
   - Ordonné
-- **Datagramme (UDP)** :
-  - Pas de connexion
-  - Non fiable
-  - Très rapide (utilisé pour les jeux en ligne, etc.)
+- **Socket de datagram (UDP)** :
+  - Sans connexion
+  - Pas fiable
+  - Plus rapide (utilisé par exemple pour les jeux en ligne)
 
 ---
 
-## ⚙️ Fonctions essentielles
+## ⚙️ Fonctions socket importantes
 
 ### `int socket(int domain, int type, int protocol)`
-Crée un socket :
-- `domain` : ex. `AF_INET` (IPv4)
-- `type` : `SOCK_STREAM` (TCP) ou `SOCK_DGRAM` (UDP)
-- `protocol` : généralement `0` (choix automatique)
+Cette fonction permet de **créer un socket** :
+- `domain` : type d’adresse, ex: `AF_INET` pour IPv4
+- `type` : ex: `SOCK_STREAM` pour TCP ou `SOCK_DGRAM` pour UDP
+- `protocol` : généralement `0` (le système choisit le bon)
 
-📄 [Voir la doc officielle](https://man7.org/linux/man-pages/man2/socket.2.html)  
-📘 [Article explicatif](https://tala-informatique.fr/index.php?title=C_socket)
+📄 Docs utiles :  
+- [Man page officielle](https://man7.org/linux/man-pages/man2/socket.2.html)  
+- [Tala Informatique - socket](https://tala-informatique.fr/index.php?title=C_socket)
 
 ---
 
 ### `int setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t optlen)`
-Permet de **configurer certaines options du socket** :
-- Pas obligatoire, mais souvent utilisé pour éviter des erreurs ou améliorer les performances.
-- Exemple : `SO_REUSEADDR`, `TCP_NODELAY`, etc.
+Cette fonction permet de **mettre des options sur le socket**.  
+Pas obligatoire, mais utile pour :
+- Éviter certaines erreurs
+- Améliorer les performances
+- Régler des détails comme `TCP_NODELAY`, `SO_REUSEADDR`, etc.
+
+🛠 Exemple d’option :
+```cpp
+setsockopt(socketFD, IPPROTO_TCP, TCP_NODELAY, &option, sizeof(option));
+```
 
 ---
 
 ### `int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen)`
-Associe un **socket à une adresse IP et un port**.
+Cette fonction **attache le socket à une IP et un port**.
 
-### 📦 Structure `sockaddr_in`
-```c
+📦 Structure utilisée :
+```cpp
 struct sockaddr_in {
     short            sin_family;   // Type d'adresse (ex: AF_INET pour IPv4)
-    unsigned short   sin_port;     // Port (converti avec htons)
-    struct in_addr   sin_addr;     // Adresse IP (ex: 127.0.0.1)
-    char             sin_zero[8];  // Padding (non utilisé)
+    unsigned short   sin_port;     // Numéro du port (doit être converti avec htons)
+    struct in_addr   sin_addr;     // Adresse IP (ex: 192.168.1.1)
+    char             sin_zero[8];  // Rempli avec des zéros (non utilisé)
 };
+```
+
+---
+
+### `int listen(int sockfd, int backlog)`
+Cette fonction **met le socket en écoute** pour recevoir des connexions entrantes.
+
+- ⚠️ `backlog` est un paramètre important :
+  > Lorsqu’un client demande une connexion, elle est **mise dans une file d’attente** avant d’être acceptée avec `accept()`.  
+  > `backlog` détermine la **taille de cette file**.
+
+---
+
+## 🧠 Schéma explicatif du workflow socket
+
+![Workflow Socket](https://tala-informatique.fr/images/c/cd/Socket_workflow.png)
+
+---
+
+## 🔗 Liens utiles
+
+- [Man page socket](https://man7.org/linux/man-pages/man2/socket.2.html)
+- [Tala Informatique - socket](https://tala-informatique.fr/index.php?title=C_socket)
