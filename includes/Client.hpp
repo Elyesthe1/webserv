@@ -5,7 +5,7 @@
 class Client
 {
     public:
-        int GetClientFd() const;
+        // int GetClientFd() const;
         Client(const int fd, struct sockaddr_in addr);
         ~Client();
     private:
