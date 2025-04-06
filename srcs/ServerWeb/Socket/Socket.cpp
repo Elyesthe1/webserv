@@ -1,6 +1,6 @@
 #include "../../../includes/Socket.hpp"
 
-Socket::Socket(Config &config)
+Socket::Socket(const Config &config)
 {
     try
     {
@@ -10,10 +10,23 @@ Socket::Socket(Config &config)
     {
         std::cerr << e.what() << strerror(errno) << std::endl;
         exit(EXIT_FAILURE);
-    }   
+    }
 }
 
-void Socket::InitSocket(Config &config) 
+Client Socket::AcceptClient()
+{
+    struct sockaddr_in addrr;
+    socklen_t addrlen = sizeof(socklen_t);
+    int newFd = accept(this->socketFD, (struct sockaddr*)&addrr, &addrlen);
+    if (newFd == -1)
+    {
+        //ecrire dans le fichier logs et return ;
+        throw std::exception();
+    }
+    return Client(newFd, addrr);
+}
+
+void Socket::InitSocket(const Config &config) 
 {
     this->CreateSocket(config);
     this->SetSocketOp(config);
@@ -21,25 +34,24 @@ void Socket::InitSocket(Config &config)
     this->Listen(config);
 }
 
-
-void Socket::Listen(Config &config) const
+void Socket::Listen(const Config &config) const
 {
     if(listen(this->socketFD, 10) == -1)
         throw std::runtime_error("Error: Failed to Listen the socket: ");
 }
 
-void Socket::BindSocket(Config &config) const
+void Socket::BindSocket(const Config &config) const
 {
     if (bind(this->socketFD, (struct sockaddr*)&config.Getaddr(), sizeof(config.Getaddr())) == - 1)
         throw std::runtime_error("Error: Failed to bind the socket: ");
 }
-void Socket::CreateSocket(Config &config)
+void Socket::CreateSocket(const Config &config)
 {
     if((this->socketFD = socket(AF_INET, SOCK_STREAM, 0)) == -1)
         throw std::runtime_error("Error: Failed to create socket: ");
 }
 // pas encore sure sure de cette fonction a voir, celon le fichier conf et tout
-void Socket::SetSocketOp(Config &config) const
+void Socket::SetSocketOp(const Config &config) const
 {
     int option = 1;
     if (setsockopt(this->socketFD, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &option, sizeof(option)) == -1) 

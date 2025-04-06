@@ -1,3 +1,6 @@
+faire un systeme de log, donc un objet qui re supprime tout se qu il a dans un fichier si il est existe print toute les erreur qui ne seront pas afficher car ca fait pas exit le program
+
+
 socketpair : permet de creer une pair de socket connecter 
 
 htons en gros convertie un entier 16bit en un format utiliser pour le reseau

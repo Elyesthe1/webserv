@@ -10,5 +10,4 @@ class Config
         const struct sockaddr_in& Getaddr() const ;
     private:
         struct sockaddr_in address;
-
 };

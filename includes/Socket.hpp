@@ -7,17 +7,19 @@
 #include "Config.hpp"
 #include <exception>
 #include <unistd.h>
+#include "Client.hpp"
 class Socket
 {
     public:
-        Socket(Config &config);
+        Socket(const Config &config);
         ~Socket();
+        Client AcceptClient();
     private:
         void CloseSocket();
-        void InitSocket(Config &config);
-        void Listen(Config &config) const ;
-        void BindSocket(Config &config) const ;
-        void SetSocketOp(Config &config) const;
-        void CreateSocket(Config &config);
+        void InitSocket(const Config &config);
+        void Listen(const Config &config) const ;
+        void BindSocket(const Config &config) const ;
+        void SetSocketOp(const Config &config) const;
+        void CreateSocket(const Config &config);
         int socketFD;
 };
