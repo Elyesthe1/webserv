@@ -6,6 +6,7 @@
 #include "Config.hpp"
 #include "Client.hpp"
 #include <map>
+#include "Logger.hpp"
 #include <sys/epoll.h>
 class ServerWeb
 {

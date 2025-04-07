@@ -28,11 +28,12 @@ void ServerWeb::run()
 {
 	try
 	{
-		this->launch();
+        Logger::InfoLog("Server", "Server started successfully! Listening on port " + std::to_string(this->config.GetPorts()));
+        this->launch();
 	}
 	catch(const std::exception& e)
 	{
-		std::cerr << e.what() << strerror(errno) << std::endl;
+        Logger::ErrorLog("ServerWeb", std::string(e.what()) + strerror(errno));
 	}
 		
 }

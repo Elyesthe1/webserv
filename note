@@ -1,5 +1,4 @@
-logger faire herite a toute les class la mettre en static comme ca pas besoin de l instancie 
-
+inet_ntoa le recoder si vraiment pas le droit comme on affiche l ip des mecs qui se connecte
 socketpair : permet de creer une pair de socket connecter 
 
 htons en gros convertie un entier 16bit en un format utiliser pour le reseau

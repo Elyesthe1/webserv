@@ -11,6 +11,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <fcntl.h>
+#include "Logger.hpp"
 class Socket
 {
     public:
