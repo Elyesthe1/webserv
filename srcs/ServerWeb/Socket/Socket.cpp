@@ -23,15 +23,26 @@ Client Socket::AcceptClient()
         //ecrire dans le fichier logs et return ;
         throw std::exception();
     }
+    this->SetNonBlocking(newFd);
     return Client(newFd, addrr);
 }
 
 void Socket::InitSocket(const Config &config) 
 {
     this->CreateSocket(config);
-    this->SetSocketOp(config);
+    this->SetNonBlocking(this->socketFD);
+    this->SetSocketOp(config); // pas encore sure des option a mettre 
     this->BindSocket(config);
     this->Listen(config);
+}
+
+void Socket::SetNonBlocking(int fd)
+{
+    int flag = fcntl(fd, F_GETFL, 0);
+    if (flag == -1)
+        throw std::runtime_error("Error: Failed to set the socket in non blocking: ");
+    if (fcntl(fd, F_SETFL, flag | O_NONBLOCK) == -1)
+        throw std::runtime_error("Error: Failed to set the socket in non blocking: ");
 }
 
 void Socket::Listen(const Config &config) const

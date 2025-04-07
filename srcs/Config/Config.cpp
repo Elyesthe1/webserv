@@ -7,7 +7,7 @@ Config::Config(int ac, char **av)
     // setup juste pour test
     this->address.sin_family = AF_INET;
     this->address.sin_addr.s_addr = INADDR_ANY;
-    this->address.sin_port = htons(80);
+    this->address.sin_port = htons(8080);
     if (ac == 1)
     {
         std::ifstream default_conf("conf/default.conf");

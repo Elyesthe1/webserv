@@ -3,6 +3,7 @@
 #include <fstream>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <cstdlib>
 class Config
 {
     public:

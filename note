@@ -1,5 +1,4 @@
-faire un systeme de log, donc un objet qui re supprime tout se qu il a dans un fichier si il est existe print toute les erreur qui ne seront pas afficher car ca fait pas exit le program
-
+logger faire herite a toute les class la mettre en static comme ca pas besoin de l instancie 
 
 socketpair : permet de creer une pair de socket connecter 
 

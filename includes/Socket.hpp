@@ -8,6 +8,9 @@
 #include <exception>
 #include <unistd.h>
 #include "Client.hpp"
+#include <cstring>
+#include <cstdlib>
+#include <fcntl.h>
 class Socket
 {
     public:
@@ -21,5 +24,6 @@ class Socket
         void BindSocket(const Config &config) const ;
         void SetSocketOp(const Config &config) const;
         void CreateSocket(const Config &config);
+        void SetNonBlocking(int fd);
         int socketFD;
 };
