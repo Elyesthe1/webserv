@@ -1,4 +1,4 @@
-inet_ntoa le recoder si vraiment pas le droit comme on affiche l ip des mecs qui se connecte
+pour logger faire emote zehma paneau pour warning, croix rouge pour error , ect .. 
 socketpair : permet de creer une pair de socket connecter 
 
 htons en gros convertie un entier 16bit en un format utiliser pour le reseau

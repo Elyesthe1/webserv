@@ -19,14 +19,14 @@ const std::string GetCurrentTime()
 
 void Logger::InfoLog(const std::string &service, const std::string &msg)
 {
-    std::cerr <<  GetCurrentTime() << GREEN << "[" << service + "] " << msg << COLOR_RESET << std::endl;  
+    std::cerr <<  GetCurrentTime() << GREEN << "[INFO] " << "[" << service + "] " << msg << DEFAULTCOLOR << std::endl;  
 }
 void Logger::WarningLog(const std::string &service, const std::string &msg)
 {
-    std::cerr <<  GetCurrentTime() << YELLOW << "[" << service + "] " << msg << COLOR_RESET << std::endl;
+    std::cerr <<  GetCurrentTime() << YELLOW << "[WARNING] " << "[" << service + "] " << msg << DEFAULTCOLOR << std::endl;
 }
 
 void Logger::ErrorLog(const std::string &service, const std::string &msg)
 {
-    std::cerr <<  GetCurrentTime() << RED << "[" << service + "] " << "Error: " <<  msg << COLOR_RESET << std::endl;
+    std::cerr <<  GetCurrentTime() << RED << "[" << service + "] " << "Error: " <<  msg << DEFAULTCOLOR << std::endl;
 }

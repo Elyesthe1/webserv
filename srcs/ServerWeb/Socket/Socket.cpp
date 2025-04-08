@@ -1,5 +1,7 @@
 #include "../../../includes/Socket.hpp"
 
+int Socket::GetFd() const {return this->socketFD;}
+
 Socket::Socket(const Config &config)
 {
     try
@@ -13,10 +15,18 @@ Socket::Socket(const Config &config)
     }
 }
 
+const std::string Socket::GetIp(const in_addr &sin_addr)
+{
+    char ip[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &sin_addr, ip, INET_ADDRSTRLEN);
+    return ip;
+}
+
+
 Client Socket::AcceptClient()
 {
     struct sockaddr_in addrr;
-    socklen_t addrlen = sizeof(socklen_t);
+    socklen_t addrlen = sizeof(struct sockaddr_in);
     int newFd = accept(this->socketFD, (struct sockaddr*)&addrr, &addrlen);
     if (newFd == -1)
     {
@@ -24,6 +34,7 @@ Client Socket::AcceptClient()
         throw std::exception();
     }
     this->SetNonBlocking(newFd);
+    Logger::InfoLog("Socket", "Accepted connection from " + this->GetIp(addrr.sin_addr) + ":" + " (fd: " + intTostring(newFd) + ")");
     return Client(newFd, addrr);
 }
 
@@ -47,7 +58,7 @@ void Socket::SetNonBlocking(int fd)
 
 void Socket::Listen(const Config &config) const
 {
-    if(listen(this->socketFD, 10) == -1)
+    if(listen(this->socketFD, 1024) == -1)
         throw std::runtime_error("Failed to Listen the socket: ");
 }
 

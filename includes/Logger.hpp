@@ -1,7 +1,7 @@
 #pragma once
 #include <iostream>
 #include <fstream>
-#define COLOR_RESET   "\033[0m"
+#define DEFAULTCOLOR   "\033[0m"
 #define GREEN    "\033[32m" 
 #define YELLOW "\033[33m"
 #define RED   "\033[31m"

@@ -12,13 +12,19 @@
 #include <cstdlib>
 #include <fcntl.h>
 #include "Logger.hpp"
+#include <arpa/inet.h>
+
+const std::string intTostring(const int n);
+
 class Socket
 {
     public:
         Socket(const Config &config);
         ~Socket();
         Client AcceptClient();
+        int GetFd() const ;
     private:
+        const std::string GetIp(const in_addr &addrr);
         void CloseSocket();
         void InitSocket(const Config &config);
         void Listen(const Config &config) const ;

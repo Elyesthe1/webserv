@@ -8,6 +8,9 @@
 #include <map>
 #include "Logger.hpp"
 #include <sys/epoll.h>
+#include <string>
+const std::string intTostring(const int n);
+
 class ServerWeb
 {
     public:
@@ -15,11 +18,14 @@ class ServerWeb
         void run();
         ~ServerWeb();
     private:
+		void FdLoop(struct epoll_event events[1024], int readyFD);
+        int Epoll_Wait(struct epoll_event events[1024]);
+        void MainLoop();
         void launch();
         void CloseEpoll();
         void EpollInit();
         int epoll;
         std::map<int, Client> client;
         const Config config;
-        const Socket socket;
+        Socket socket;
 };
