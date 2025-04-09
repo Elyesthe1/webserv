@@ -1,3 +1,4 @@
+JE CROIS QUE LES SOCKET SURVEILLE PAS TOUT LES EVENTS FAUT CHECK CA ET METTRE LES BON FLAG
 pour logger faire emote zehma paneau pour warning, croix rouge pour error , ect .. 
 socketpair : permet de creer une pair de socket connecter 
 

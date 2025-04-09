@@ -21,7 +21,8 @@ class Socket
     public:
         Socket(const Config &config);
         ~Socket();
-        Client AcceptClient();
+        // Client AcceptClient();
+        int AcceptClient();
         int GetFd() const ;
     private:
         const std::string GetIp(const in_addr &addrr);

@@ -18,14 +18,19 @@ class ServerWeb
         void run();
         ~ServerWeb();
     private:
-		void FdLoop(struct epoll_event events[1024], int readyFD);
-        int Epoll_Wait(struct epoll_event events[1024]);
+	    struct epoll_event events[1024];
+        void ClientHandler( const struct epoll_event &events);
+        void DisconnectClient(const struct epoll_event &events);
+        void NewClient();
+		void FdLoop(int readyFD);
+        int Epoll_Wait();
         void MainLoop();
         void launch();
         void CloseEpoll();
         void EpollInit();
         int epoll;
-        std::map<int, Client> client;
+        void ReceiveData(const struct epoll_event &events);
+        // std::map<int, Client> client;
         const Config config;
         Socket socket;
 };

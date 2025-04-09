@@ -23,19 +23,35 @@ const std::string Socket::GetIp(const in_addr &sin_addr)
 }
 
 
-Client Socket::AcceptClient()
+// Client Socket::AcceptClient()
+// {
+//     struct sockaddr_in addrr;
+//     socklen_t addrlen = sizeof(struct sockaddr_in);
+//     int newFd = accept(this->socketFD, (struct sockaddr*)&addrr, &addrlen);
+//     if (newFd == -1)
+//     {
+//         Logger::WarningLog("Socket", "accept() failed while trying to accept a new client connection: " + std::string(strerror(errno)));
+//         throw std::exception();
+//     }
+//     this->SetNonBlocking(newFd);
+//     Logger::InfoLog("Socket", "Accepted connection from " + this->GetIp(addrr.sin_addr) + ":" + " (fd: " + intTostring(newFd) + ")");
+//     return Client(newFd, addrr);
+// }
+
+int Socket::AcceptClient()
 {
     struct sockaddr_in addrr;
     socklen_t addrlen = sizeof(struct sockaddr_in);
     int newFd = accept(this->socketFD, (struct sockaddr*)&addrr, &addrlen);
     if (newFd == -1)
     {
+
         Logger::WarningLog("Socket", "accept() failed while trying to accept a new client connection: " + std::string(strerror(errno)));
         throw std::exception();
     }
     this->SetNonBlocking(newFd);
     Logger::InfoLog("Socket", "Accepted connection from " + this->GetIp(addrr.sin_addr) + ":" + " (fd: " + intTostring(newFd) + ")");
-    return Client(newFd, addrr);
+    return newFd;
 }
 
 void Socket::InitSocket(const Config &config) 
