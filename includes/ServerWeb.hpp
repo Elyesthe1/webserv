@@ -18,6 +18,7 @@ class ServerWeb
         void run();
         ~ServerWeb();
     private:
+        void Send(const int &client);
 	    struct epoll_event events[1024];
         void ClientHandler( const struct epoll_event &events);
         void DisconnectClient(const struct epoll_event &events);

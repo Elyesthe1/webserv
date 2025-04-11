@@ -12,8 +12,6 @@
 #include <cstdlib>
 #include <fcntl.h>
 #include "Logger.hpp"
-#include <arpa/inet.h>
-
 const std::string intTostring(const int n);
 
 class Socket

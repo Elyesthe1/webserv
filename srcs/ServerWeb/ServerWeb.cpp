@@ -19,7 +19,7 @@ void ServerWeb::EpollInit()
 	if ((this->epoll = epoll_create(1024)) == -1)
 		throw std::runtime_error("Cannot create epoll: ");
 	struct epoll_event events;
-	events.events = EPOLLIN;
+	events.events = EPOLLIN ;
 	events.data.fd = this->socket.GetFd();
 	if (epoll_ctl(this->epoll, EPOLL_CTL_ADD, this->socket.GetFd(), &events) == -1)
     	throw std::runtime_error("Cannot add listening socket to epoll: ");
@@ -35,14 +35,28 @@ int ServerWeb::Epoll_Wait()
 
 //            send(sockfd, buf, size, flags);
 
+void ServerWeb::Send(const int &client)
+{
+	std::ifstream file("index.html");
+	std::stringstream content;
+	content << file.rdbuf();
+	std::string body = content.str();
+	std::string response = "HTTP/1.1 200 OK\r\n";
+	response += "Content-Type: text/html\r\n";
+	response += "Content-Length: " + intTostring(body.size()) + "\r\n";
+	response += "\r\n";
+	response += body;
+	send(client, response.c_str(), response.size(), 0);
+}
+
 void ServerWeb::NewClient()
 {
 	int NewClient = this->socket.AcceptClient();
 	struct epoll_event eve;
-	eve.events = EPOLLIN;
-	eve.data.fd = NewClient;
+	eve.events = EPOLLIN ; // EPOLLOUT lorsque je rejoute le flag, pour savoir si il est pret que j ecrive, ca avance car en tcp les socket sont tjr pret a ecrire
+ 	eve.data.fd = NewClient;
 	epoll_ctl(this->epoll, EPOLL_CTL_ADD, NewClient, &eve);
-	send(NewClient, "fdp bouffon\n", 12, 0);
+	this->Send(NewClient);
 }
 
 void ServerWeb::DisconnectClient(const struct epoll_event &events)
@@ -58,8 +72,9 @@ void ServerWeb::DisconnectClient(const struct epoll_event &events)
 void ServerWeb::ReceiveData(const struct epoll_event &events)
 {
 	char read[1024];
-	int status = recv(events.data.fd, read, 1024, -1);
-	if (status == -1)
+	std::size_t status = recv(events.data.fd, read, sizeof(read), 0); // return 2 caractere en plus qui indique une fin de ligne " Carriage Return Line Feed"
+	std::cout << read << std::endl;
+	if (status == 0)
 		this->DisconnectClient(events);
 }
 
@@ -74,10 +89,8 @@ void ServerWeb::ClientHandler( const struct epoll_event &events)
 
 void ServerWeb::FdLoop(int ReadyFD)
 {
-	int i = 0;
-	for(i = 0; i < ReadyFD; i++)
+	for(int i = 0; i < ReadyFD; i++)
 			this->ClientHandler(this->events[i]);
- 
 }
 
 

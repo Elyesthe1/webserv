@@ -15,11 +15,12 @@ Socket::Socket(const Config &config)
     }
 }
 
-const std::string Socket::GetIp(const in_addr &sin_addr)
+const std::string Socket::GetIp(const in_addr &sin_addr) 
 {
     char ip[INET_ADDRSTRLEN];
-    inet_ntop(AF_INET, &sin_addr, ip, INET_ADDRSTRLEN);
-    return ip;
+    const unsigned char* bytes = reinterpret_cast<const unsigned char*>(&sin_addr);
+    std::snprintf(ip, INET_ADDRSTRLEN, "%u.%u.%u.%u", bytes[0], bytes[1], bytes[2], bytes[3]);
+    return std::string(ip);
 }
 
 
