@@ -102,7 +102,7 @@ void ServerWeb::NewClient()
 
 void ServerWeb::DisconnectClient(const struct epoll_event &events)
 {
-	epoll_ctl(this->epoll, EPOLL_CTL_DEL, events.data.fd,this->events); // pas obligele kernel le fait a ta place 
+	epoll_ctl(this->epoll, EPOLL_CTL_DEL, events.data.fd,this->events); // pas obligele kernel le fait a ta place // CHECK RETURN VALUE ?
 	close(events.data.fd);
 	if (events.events & EPOLLERR)
 		Logger::WarningLog("Client", "⚠️ Unexpected disconnection (fd: " + intTostring(events.data.fd) + ")");
