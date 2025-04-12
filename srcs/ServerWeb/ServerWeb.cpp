@@ -163,13 +163,9 @@ void ServerWeb::SignalHandler(int Sig)
 void ServerWeb::ManageSignals(bool flag)
 {
 	if (flag)
-	{
 		signal(SIGINT, ServerWeb::SignalHandler);
-	}
 	else
-	{
 		signal(SIGINT, SIG_DFL);
-	}
 }
 
 
