@@ -6,6 +6,9 @@ int Config::GetPorts() const {return this->ports;}
 
 const std::string & Config::GetRoot() const {return this->root;}
 
+const std::string &Config::Get404() const {return this->Error404Path;}
+
+
 
 Config::Config(int ac, char **av)
 {
@@ -15,6 +18,7 @@ Config::Config(int ac, char **av)
     this->address.sin_port = htons(8080);
     this->ports = 8080;
     this->root = "www/default/index.html";
+    this->Error404Path = "www/default/errors/404.html";
     if (ac == 1)
     {
         std::ifstream default_conf("conf/default.conf");

@@ -9,7 +9,9 @@
 #include "Logger.hpp"
 #include <sys/epoll.h>
 #include <string>
+#include <signal.h>
 #define NOT_FOUND_404 "<html><body><h1>404 Not Found</h1><p>Page introuvable</p></body></html>"
+
 const std::string intTostring(const int n);
 
 class ServerWeb
@@ -19,6 +21,10 @@ class ServerWeb
         void run();
         ~ServerWeb();
     private:
+        static int running;
+        static void SignalHandler(int Sig);
+        void ManageSignals(bool flag);
+        std::string BuildHttpResponse(const std::string &FilePath, int &StatusCode);
         std::string BuildHttpHeader(const int StatusCode, const std::string& ContentType, const size_t ContentLen);
         std::string Send404Page();
         std::string BuildBody(const std::string &FilePath, int &StatusCode);

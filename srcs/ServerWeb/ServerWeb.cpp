@@ -1,10 +1,13 @@
 #include "../../includes/ServerWeb.hpp"
 
+int ServerWeb::running = 1;
+
 ServerWeb::ServerWeb(int ac, char **av): config(ac, av), socket(this->config) {}
 
 ServerWeb::~ServerWeb()
 {
     this->CloseEpoll();
+	this->ManageSignals(false);	
 }
 
 void ServerWeb::CloseEpoll()
@@ -35,7 +38,7 @@ int ServerWeb::Epoll_Wait()
 
 std::string ServerWeb::Send404Page() 
 {
-	std::ifstream file("www/default/errors/404.html");
+	std::ifstream file(this->config.Get404().c_str());
 	if (!file)
 		return NOT_FOUND_404;
 	std::stringstream buffer;
@@ -73,14 +76,18 @@ std::string ServerWeb::BuildBody(const std::string &FilePath, int &StatusCode)
 	return buffer.str();
 }
 
+std::string ServerWeb::BuildHttpResponse(const std::string &FilePath, int &StatusCode)
+{
+	std::string body = this->BuildBody(FilePath, StatusCode);
+	std::string header = this->BuildHttpHeader(StatusCode, "text/html", body.size());
+	return header + body;
+}
 
 void ServerWeb::Send(const int &clientFd, const std::string &FilePath)
 {
 	int StatusCode = 200;
-	std::string body = this->BuildBody(FilePath, StatusCode);
-	std::string header = BuildHttpHeader(StatusCode, "text/html", body.size());
-	std::string page = header + body;
-	send(clientFd, page.c_str(), page.size(), 0);
+	std::string Response = this->BuildHttpResponse(FilePath, StatusCode);
+	send(clientFd, Response.c_str(), Response.size(), 0); // check return value ?
 }
 
 void ServerWeb::NewClient()
@@ -89,7 +96,7 @@ void ServerWeb::NewClient()
 	struct epoll_event eve;
 	eve.events = EPOLLIN ; // EPOLLOUT lorsque je rejoute le flag, pour savoir si il est pret que j ecrive, ca avance car en tcp les socket sont tjr pret a ecrire
  	eve.data.fd = NewClient;
-	epoll_ctl(this->epoll, EPOLL_CTL_ADD, NewClient, &eve);
+	epoll_ctl(this->epoll, EPOLL_CTL_ADD, NewClient, &eve); // CHECK RETURN VALUE ?
 	this->Send(NewClient, this->config.GetRoot());
 }
 
@@ -107,7 +114,7 @@ void ServerWeb::ReceiveData(const struct epoll_event &events)
 {
 	char read[1024];
 	std::size_t status = recv(events.data.fd, read, sizeof(read), 0); // return 2 caractere en plus qui indique une fin de ligne " Carriage Return Line Feed"
-	std::cout << read << std::endl;
+	std::cout  << "\033[31m" << "READ: " << "\033[0m" << read << std::endl;
 	if (status == 0)
 		this->DisconnectClient(events);
 }
@@ -130,7 +137,7 @@ void ServerWeb::FdLoop(const int ReadyFD)
 
 void ServerWeb::MainLoop()
 {
-	while(1)
+	while(ServerWeb::running)
 	{
 		int readyFD = this->Epoll_Wait();
 		FdLoop(readyFD);
@@ -144,15 +151,38 @@ void ServerWeb::launch()
 	this->MainLoop();
 }
 
+void ServerWeb::SignalHandler(int Sig)
+{
+	if (Sig == SIGINT)
+	{
+		Logger::InfoLog("SIGINT", "Serveur interrompu par SIGINT (Ctrl+C). Fermeture propre...");
+		ServerWeb::running = 0;
+	}
+}
+
+void ServerWeb::ManageSignals(bool flag)
+{
+	if (flag)
+	{
+		signal(SIGINT, ServerWeb::SignalHandler);
+	}
+	else
+	{
+		signal(SIGINT, SIG_DFL);
+	}
+}
+
+
 void ServerWeb::run() 
 {
+	this->ManageSignals(true);	
 	try
 	{
         this->launch();
 	}
 	catch(const std::exception& e)
 	{
-		Logger::ErrorLog("Server", "A critical error occurred. The server will shut down. Reason: " + std::string(e.what()));
+		if (ServerWeb::running)
+			Logger::ErrorLog("Server", "A critical error occurred. The server will shut down. Reason: " + std::string(e.what()));
 	}
-		
 }
