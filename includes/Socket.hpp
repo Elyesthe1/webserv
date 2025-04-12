@@ -12,6 +12,7 @@
 #include <cstdlib>
 #include <fcntl.h>
 #include "Logger.hpp"
+#define MAX_CLIENT 1024
 const std::string intTostring(const int n);
 
 class Socket

@@ -1,5 +1,5 @@
-JE CROIS QUE LES SOCKET SURVEILLE PAS TOUT LES EVENTS FAUT CHECK CA ET METTRE LES BON FLAG
-pour logger faire emote zehma paneau pour warning, croix rouge pour error , ect .. 
+boucle pour rcv car tant que status pas 0 attente
+// pas sure de le faire : pour logger faire emote zehma paneau pour warning, croix rouge pour error , ect .. 
 socketpair : permet de creer une pair de socket connecter 
 
 htons en gros convertie un entier 16bit en un format utiliser pour le reseau

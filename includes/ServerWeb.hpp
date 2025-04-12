@@ -9,6 +9,7 @@
 #include "Logger.hpp"
 #include <sys/epoll.h>
 #include <string>
+#define NOT_FOUND_404 "<html><body><h1>404 Not Found</h1><p>Page introuvable</p></body></html>"
 const std::string intTostring(const int n);
 
 class ServerWeb
@@ -20,6 +21,7 @@ class ServerWeb
     private:
         std::string BuildHttpHeader(const int StatusCode, const std::string& ContentType, const size_t ContentLen);
         std::string Send404Page();
+        std::string BuildBody(const std::string &FilePath, int &StatusCode);
         void Send(const int &client, const std::string &FilePath);
 	    struct epoll_event events[1024];
         void ClientHandler( const struct epoll_event &events);

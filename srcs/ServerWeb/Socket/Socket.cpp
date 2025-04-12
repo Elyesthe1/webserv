@@ -75,7 +75,7 @@ void Socket::SetNonBlocking(int fd)
 
 void Socket::Listen(const Config &config) const
 {
-    if(listen(this->socketFD, 1024) == -1)
+    if(listen(this->socketFD, MAX_CLIENT) == -1)
         throw std::runtime_error("Failed to Listen the socket: ");
 }
 

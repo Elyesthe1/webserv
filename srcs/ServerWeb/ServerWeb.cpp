@@ -16,7 +16,7 @@ void ServerWeb::CloseEpoll()
 
 void ServerWeb::EpollInit()
 {
-	if ((this->epoll = epoll_create(1024)) == -1)
+	if ((this->epoll = epoll_create(MAX_CLIENT)) == -1)
 		throw std::runtime_error("Cannot create epoll: ");
 	struct epoll_event events;
 	events.events = EPOLLIN ;
@@ -27,7 +27,7 @@ void ServerWeb::EpollInit()
 
 int ServerWeb::Epoll_Wait()
 {
-	int fd = epoll_wait(this->epoll, this->events, 1024, -1);
+	int fd = epoll_wait(this->epoll, this->events, MAX_CLIENT, -1);
 	if (fd == -1)
     	throw std::runtime_error("epoll_wait failed: " + std::string(strerror(errno)));
 	return fd;
@@ -35,9 +35,9 @@ int ServerWeb::Epoll_Wait()
 
 std::string ServerWeb::Send404Page() 
 {
-	std::ifstream file("www/default/404.html");
+	std::ifstream file("www/default/errors/404.html");
 	if (!file)
-		return "<html><body><h1>404 Not Found</h1><p>Page introuvable</p></body></html>";
+		return NOT_FOUND_404;
 	std::stringstream buffer;
 	buffer << file.rdbuf();
 	return buffer.str();
@@ -60,24 +60,26 @@ std::string ServerWeb::BuildHttpHeader(const int StatusCode, const std::string& 
     return header;
 }
 
-void ServerWeb::Send(const int &clientFd, const std::string &FilePath)
+std::string ServerWeb::BuildBody(const std::string &FilePath, int &StatusCode)
 {
 	std::ifstream file(FilePath.c_str());
-	std::string body;
-	int statusCode = 200;
-	if (!file) 
+	if (!file)
 	{
-		body = this->Send404Page();
-		statusCode = 404;
-	} 
-	else 
-	{
-		std::stringstream buffer;
-		buffer << file.rdbuf();
-		body = buffer.str();
+		StatusCode = 404;
+		return this->Send404Page();
 	}
-	std::string page = BuildHttpHeader(statusCode, "text/html", body.size());
-	page = page + body;
+	std::stringstream buffer;
+	buffer << file.rdbuf();
+	return buffer.str();
+}
+
+
+void ServerWeb::Send(const int &clientFd, const std::string &FilePath)
+{
+	int StatusCode = 200;
+	std::string body = this->BuildBody(FilePath, StatusCode);
+	std::string header = BuildHttpHeader(StatusCode, "text/html", body.size());
+	std::string page = header + body;
 	send(clientFd, page.c_str(), page.size(), 0);
 }
 
