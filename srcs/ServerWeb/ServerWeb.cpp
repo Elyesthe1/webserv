@@ -33,20 +33,52 @@ int ServerWeb::Epoll_Wait()
 	return fd;
 }
 
-//            send(sockfd, buf, size, flags);
-
-void ServerWeb::Send(const int &client)
+std::string ServerWeb::Send404Page() 
 {
-	std::ifstream file("index.html");
-	std::stringstream content;
-	content << file.rdbuf();
-	std::string body = content.str();
-	std::string response = "HTTP/1.1 200 OK\r\n";
-	response += "Content-Type: text/html\r\n";
-	response += "Content-Length: " + intTostring(body.size()) + "\r\n";
-	response += "\r\n";
-	response += body;
-	send(client, response.c_str(), response.size(), 0);
+	std::ifstream file("www/default/404.html");
+	if (!file)
+		return "<html><body><h1>404 Not Found</h1><p>Page introuvable</p></body></html>";
+	std::stringstream buffer;
+	buffer << file.rdbuf();
+	return buffer.str();
+}
+
+std::string ServerWeb::BuildHttpHeader(const int StatusCode, const std::string& ContentType, const size_t ContentLen) 
+{
+    std::string statusText;
+    switch (StatusCode) 
+	{
+        case 200: statusText = "OK"; break;
+        case 404: statusText = "Not Found"; break;
+		default:  statusText = "Unknown"; break;
+    }
+    std::string header = "HTTP/1.1 " + intTostring(StatusCode) + " " + statusText + "\r\n";
+    header += "Content-Type: " + ContentType + "\r\n";
+    header += "Content-Length: " +	intTostring(ContentLen) + "\r\n";
+    header += "Connection: close\r\n";
+    header += "\r\n";
+    return header;
+}
+
+void ServerWeb::Send(const int &clientFd, const std::string &FilePath)
+{
+	std::ifstream file(FilePath.c_str());
+	std::string body;
+	int statusCode = 200;
+	if (!file) 
+	{
+		body = this->Send404Page();
+		statusCode = 404;
+	} 
+	else 
+	{
+		std::stringstream buffer;
+		buffer << file.rdbuf();
+		body = buffer.str();
+	}
+	std::string page = BuildHttpHeader(statusCode, "text/html", body.size());
+	page = page + body;
+	send(clientFd, page.c_str(), page.size(), 0);
 }
 
 void ServerWeb::NewClient()
@@ -56,7 +88,7 @@ void ServerWeb::NewClient()
 	eve.events = EPOLLIN ; // EPOLLOUT lorsque je rejoute le flag, pour savoir si il est pret que j ecrive, ca avance car en tcp les socket sont tjr pret a ecrire
  	eve.data.fd = NewClient;
 	epoll_ctl(this->epoll, EPOLL_CTL_ADD, NewClient, &eve);
-	this->Send(NewClient);
+	this->Send(NewClient, this->config.GetRoot());
 }
 
 void ServerWeb::DisconnectClient(const struct epoll_event &events)
@@ -87,7 +119,7 @@ void ServerWeb::ClientHandler( const struct epoll_event &events)
 }
 
 
-void ServerWeb::FdLoop(int ReadyFD)
+void ServerWeb::FdLoop(const int ReadyFD)
 {
 	for(int i = 0; i < ReadyFD; i++)
 			this->ClientHandler(this->events[i]);

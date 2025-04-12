@@ -18,12 +18,14 @@ class ServerWeb
         void run();
         ~ServerWeb();
     private:
-        void Send(const int &client);
+        std::string BuildHttpHeader(const int StatusCode, const std::string& ContentType, const size_t ContentLen);
+        std::string Send404Page();
+        void Send(const int &client, const std::string &FilePath);
 	    struct epoll_event events[1024];
         void ClientHandler( const struct epoll_event &events);
         void DisconnectClient(const struct epoll_event &events);
         void NewClient();
-		void FdLoop(int readyFD);
+		void FdLoop(const int readyFD);
         int Epoll_Wait();
         void MainLoop();
         void launch();
