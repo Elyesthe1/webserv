@@ -76,8 +76,9 @@ std::string ServerWeb::BuildBody(const std::string &FilePath, int &StatusCode)
 	return buffer.str();
 }
 
-std::string ServerWeb::BuildHttpResponse(const std::string &FilePath, int &StatusCode)
+std::string ServerWeb::BuildHttpResponse(const std::string &FilePathe)
 {
+    int StatusCode = 200;
 	std::string body = this->BuildBody(FilePath, StatusCode);
 	std::string header = this->BuildHttpHeader(StatusCode, "text/html", body.size());
 	return header + body;
@@ -85,7 +86,6 @@ std::string ServerWeb::BuildHttpResponse(const std::string &FilePath, int &Statu
 
 void ServerWeb::Send(const int &clientFd, const std::string &FilePath)
 {
-	int StatusCode = 200;
 	std::string Response = this->BuildHttpResponse(FilePath, StatusCode);
 	if (send(clientFd, Response.c_str(), Response.size(), 0) == -1)
 		throw std::runtime_error(std::string("send() failed: ") + strerror(errno));
@@ -94,11 +94,11 @@ void ServerWeb::NewClient()
 {
 	int NewClient = this->socket.AcceptClient();
 	struct epoll_event eve;
-	eve.events = EPOLLIN ; // EPOLLOUT lorsque je rejoute le flag, pour savoir si il est pret que j ecrive, ca avance car en tcp les socket sont tjr pret a ecrire
+	eve.events = EPOLLIN ;
  	eve.data.fd = NewClient;
 	if (epoll_ctl(this->epoll, EPOLL_CTL_ADD, NewClient, &eve) == -1)
 		Logger::ErrorLog("epoll_ctl", "Add client to epoll failed " + std::string(strerror(errno)));
-	this->Send(NewClient, this->config.GetRoot());
+	this->Send(NewClient, this->config.GetRoot()); // a enlever plus tard, je doit attendre un rcv et envoyer la bonne page avec la methode recv
 }
 
 void ServerWeb::DisconnectClient(const struct epoll_event &events)
@@ -125,12 +125,7 @@ int ServerWeb::RecvLoop(const int Client)
 		else if (status == 0)
 			break;
 		else 
-		{
-			if (errno == EAGAIN || errno == EWOULDBLOCK) // r a lire pour le moment (socket non bloquant)
-				break;
-			else
-				return -1;
-		}
+            return -1; // attention j'ai pas le droit t'utiliser errno donc, peut etre faut modifier des truc ici, car si faut ya pas d'erreur et juste le yenyen il a pas encore envoyer
 	}
 	std::cout << "\033[31m" << "READ: " << "\033[0m" << Line << std::endl; // parser requete envoye bonne page ect.. 
 	return 0;

@@ -30,7 +30,7 @@ class ServerWeb
         int Epoll_Wait();
         static void SignalHandler(int Sig);
         void ManageSignals(bool flag);
-        std::string BuildHttpResponse(const std::string &FilePath, int &StatusCode);
+        std::string BuildHttpResponse(const std::string &FilePath);
         std::string BuildHttpHeader(const int StatusCode, const std::string& ContentType, const size_t ContentLen);
         std::string Send404Page();
         std::string BuildBody(const std::string &FilePath, int &StatusCode);
