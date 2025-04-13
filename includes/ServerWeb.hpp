@@ -11,7 +11,7 @@
 #include <string>
 #include <signal.h>
 #define NOT_FOUND_404 "<html><body><h1>404 Not Found</h1><p>Page introuvable</p></body></html>"
-
+#define READ_BUFFER 4096
 const std::string intTostring(const int n);
 
 class ServerWeb
@@ -21,7 +21,13 @@ class ServerWeb
         void run();
         ~ServerWeb();
     private:
+	    struct epoll_event events[1024];
+        int epoll;
+        const Config config;
+        Socket socket;
         static int running;
+        int RecvLoop(const int Client);
+        int Epoll_Wait();
         static void SignalHandler(int Sig);
         void ManageSignals(bool flag);
         std::string BuildHttpResponse(const std::string &FilePath, int &StatusCode);
@@ -29,19 +35,14 @@ class ServerWeb
         std::string Send404Page();
         std::string BuildBody(const std::string &FilePath, int &StatusCode);
         void Send(const int &client, const std::string &FilePath);
-	    struct epoll_event events[1024];
         void ClientHandler( const struct epoll_event &events);
         void DisconnectClient(const struct epoll_event &events);
         void NewClient();
 		void FdLoop(const int readyFD);
-        int Epoll_Wait();
         void MainLoop();
         void launch();
         void CloseEpoll();
         void EpollInit();
-        int epoll;
         void ReceiveData(const struct epoll_event &events);
-        // std::map<int, Client> client;
-        const Config config;
-        Socket socket;
+
 };

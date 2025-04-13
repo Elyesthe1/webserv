@@ -1,3 +1,6 @@
+// FAIRE ATTENDION DE PAS AVOIR UN THROW POUR UNE WARNING QUI FAIT QUITTER LE PROGRAM
+
+
 faire un makefile qui regroupe les .o dans un dossier obj
 boucle pour rcv car tant que status pas 0 attente
 // pas sure de le faire : pour logger faire emote zehma paneau pour warning, croix rouge pour error , ect .. 

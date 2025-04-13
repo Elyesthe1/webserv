@@ -87,22 +87,24 @@ void ServerWeb::Send(const int &clientFd, const std::string &FilePath)
 {
 	int StatusCode = 200;
 	std::string Response = this->BuildHttpResponse(FilePath, StatusCode);
-	send(clientFd, Response.c_str(), Response.size(), 0); // check return value ?
+	if (send(clientFd, Response.c_str(), Response.size(), 0) == -1)
+		throw std::runtime_error(std::string("send() failed: ") + strerror(errno));
 }
-
 void ServerWeb::NewClient()
 {
 	int NewClient = this->socket.AcceptClient();
 	struct epoll_event eve;
 	eve.events = EPOLLIN ; // EPOLLOUT lorsque je rejoute le flag, pour savoir si il est pret que j ecrive, ca avance car en tcp les socket sont tjr pret a ecrire
  	eve.data.fd = NewClient;
-	epoll_ctl(this->epoll, EPOLL_CTL_ADD, NewClient, &eve); // CHECK RETURN VALUE ?
+	if (epoll_ctl(this->epoll, EPOLL_CTL_ADD, NewClient, &eve) == -1)
+		Logger::ErrorLog("epoll_ctl", "Add client to epoll failed " + std::string(strerror(errno)));
 	this->Send(NewClient, this->config.GetRoot());
 }
 
 void ServerWeb::DisconnectClient(const struct epoll_event &events)
 {
-	epoll_ctl(this->epoll, EPOLL_CTL_DEL, events.data.fd,this->events); // pas obligele kernel le fait a ta place // CHECK RETURN VALUE ?
+	if (epoll_ctl(this->epoll, EPOLL_CTL_DEL, events.data.fd,this->events) == -1) // pas obligele kernel le fait a ta place
+		Logger::WarningLog("epoll_ctl", "Remove client to epoll failed" + std::string(strerror(errno)));
 	close(events.data.fd);
 	if (events.events & EPOLLERR)
 		Logger::WarningLog("Client", "⚠️ Unexpected disconnection (fd: " + intTostring(events.data.fd) + ")");
@@ -110,21 +112,50 @@ void ServerWeb::DisconnectClient(const struct epoll_event &events)
 		Logger::InfoLog("Client", "Client disconnected gracefully (fd: " + intTostring(events.data.fd) + ")");
 }
 
-void ServerWeb::ReceiveData(const struct epoll_event &events)
+int ServerWeb::RecvLoop(const int Client)
 {
-	char read[1024];
-	std::size_t status = recv(events.data.fd, read, sizeof(read), 0); // return 2 caractere en plus qui indique une fin de ligne " Carriage Return Line Feed"
-	std::cout  << "\033[31m" << "READ: " << "\033[0m" << read << std::endl;
-	if (status == 0)
-		this->DisconnectClient(events);
+	ssize_t status;
+	char buffer[READ_BUFFER];
+	std::string Line;
+	while (true)
+	{
+		status = recv(Client, buffer, sizeof(buffer), 0); // return 2 caractere en plus qui indique une fin de ligne " Carriage Return Line Feed"
+		if (status > 0)
+			Line.append(buffer, status);
+		else if (status == 0)
+			break;
+		else 
+		{
+			if (errno == EAGAIN || errno == EWOULDBLOCK) // r a lire pour le moment (socket non bloquant)
+				break;
+			else
+				return -1;
+		}
+	}
+	std::cout << "\033[31m" << "READ: " << "\033[0m" << Line << std::endl; // parser requete envoye bonne page ect.. 
+	return 0;
 }
 
-void ServerWeb::ClientHandler( const struct epoll_event &events)
+void ServerWeb::ReceiveData(const struct epoll_event &events)
 {
-	if (events.data.fd == this->socket.GetFd())
+	this->RecvLoop(events.data.fd);
+	this->DisconnectClient(events);
+}
+
+void ServerWeb::ClientHandler(const struct epoll_event &events)
+{
+	try
+	{
+		if (events.data.fd == this->socket.GetFd())
 			this->NewClient();
-	else
-		this->ReceiveData(events);
+		else
+			this->ReceiveData(events);
+	}
+	catch (const std::exception &e)
+	{
+		Logger::WarningLog("ClientHandler", "Problem to handle client due to: " + std::string(e.what()));
+	}
+
 }
 
 
