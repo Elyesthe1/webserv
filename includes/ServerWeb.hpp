@@ -10,6 +10,8 @@
 #include <sys/epoll.h>
 #include <string>
 #include <signal.h>
+#include <sys/stat.h>
+#include <cstdio>
 #define NOT_FOUND_404 "<html><body><h1>404 Not Found</h1><p>Page introuvable</p></body></html>"
 #define READ_BUFFER 4096
 const std::string intTostring(const int n);
@@ -29,11 +31,11 @@ class ServerWeb
         int Epoll_Wait();
         static void SignalHandler(int Sig);
         void ManageSignals(bool flag);
-        std::string BuildHttpResponse(const std::string &FilePath);
+        std::string BuildHttpResponse(int statusCode, const std::string& contentType, const std::string& body);
         std::string BuildHttpHeader(const int StatusCode, const std::string& ContentType, const size_t ContentLen);
         std::string Send404Page();
-        std::string BuildBody(const std::string &FilePath, int &StatusCode);
-        void Send(const int &client, const std::string &FilePath);
+        std::string BuildBody(std::string FilePath, int &StatusCode);
+        void Send(int clientFd, int statusCode, const std::string& contentType, const std::string& body);
         void ClientHandler( const struct epoll_event &events);
         void DisconnectClient(const struct epoll_event &events);
         void NewClient();
@@ -45,6 +47,8 @@ class ServerWeb
         void ReceiveData(const struct epoll_event &events);
         void RequestParsing(std::string Line, const int Client);
         void GetMethod(std::string Line, const int Client);
+        void DeleteMethod(std::string Line, const int Client);
         std::string GetPath(std::string line);
+        std::string GetContentType(const std::string& path);
 
 };

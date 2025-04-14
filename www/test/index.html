@@ -1,17 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Mini Webserv</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <title>Webserv Test Site</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script>
+    function sendDeleteRequest() {
+      fetch('/delete_me.txt', {
+        method: 'DELETE'
+      })
+      .then(response => {
+        if (response.ok) {
+          alert("✅ Fichier supprimé !");
+        } else {
+          alert("❌ Erreur : " + response.status);
+        }
+      })
+      .catch(error => {
+        alert("❌ Erreur réseau : " + error);
+      });
+    }
+  </script>
 </head>
 <body>
-    <h1>Welcome to Mini Webserv</h1>
-    <p>This is the homepage.</p>
-
-    <nav>
-        <a href="/post.html">POST Example</a> |
-        <a href="/delete.html">DELETE Example</a>
-    </nav>
+  <h1>🚀 Welcome to Webserv!</h1>
+  <p><a href="/about.html">About</a></p>
+  <p><a href="/upload.html">Test file upload</a></p>
+  <p><button onclick="sendDeleteRequest()">Test DELETE method</button></p>
+  <p><a href="/doesnotexist">Trigger 404</a></p>
+  <p><a href="/form-handler.py">Run CGI</a></p>
 </body>
 </html>
