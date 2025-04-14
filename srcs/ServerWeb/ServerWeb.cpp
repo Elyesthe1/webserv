@@ -76,7 +76,7 @@ std::string ServerWeb::BuildBody(const std::string &FilePath, int &StatusCode)
 	return buffer.str();
 }
 
-std::string ServerWeb::BuildHttpResponse(const std::string &FilePathe)
+std::string ServerWeb::BuildHttpResponse(const std::string &FilePath)
 {
     int StatusCode = 200;
 	std::string body = this->BuildBody(FilePath, StatusCode);
@@ -86,7 +86,7 @@ std::string ServerWeb::BuildHttpResponse(const std::string &FilePathe)
 
 void ServerWeb::Send(const int &clientFd, const std::string &FilePath)
 {
-	std::string Response = this->BuildHttpResponse(FilePath, StatusCode);
+	std::string Response = this->BuildHttpResponse(FilePath);
 	if (send(clientFd, Response.c_str(), Response.size(), 0) == -1)
 		throw std::runtime_error(std::string("send() failed: ") + strerror(errno));
 }
@@ -98,7 +98,6 @@ void ServerWeb::NewClient()
  	eve.data.fd = NewClient;
 	if (epoll_ctl(this->epoll, EPOLL_CTL_ADD, NewClient, &eve) == -1)
 		Logger::ErrorLog("epoll_ctl", "Add client to epoll failed " + std::string(strerror(errno)));
-	this->Send(NewClient, this->config.GetRoot()); // a enlever plus tard, je doit attendre un rcv et envoyer la bonne page avec la methode recv
 }
 
 void ServerWeb::DisconnectClient(const struct epoll_event &events)
@@ -112,23 +111,43 @@ void ServerWeb::DisconnectClient(const struct epoll_event &events)
 		Logger::InfoLog("Client", "Client disconnected gracefully (fd: " + intTostring(events.data.fd) + ")");
 }
 
-int ServerWeb::RecvLoop(const int Client)
+void ServerWeb::GetMethod(std::string path, const int Client)
+{
+	if (!path[1])
+		this->Send(Client, this->config.GetRoot() + this->config.GetIndex());
+	else
+		this->Send(Client, this->config.GetRoot() + path);
+}
+
+std::string ServerWeb::GetPath(std::string Line)
+{ 
+	int pos = Line.find(' ', 0);
+	return Line.substr(0, pos);
+}
+
+void ServerWeb::RequestParsing(std::string Line, const int Client)
+{
+	if (!std::strncmp(Line.c_str(), "GET", 3))
+		this->GetMethod(GetPath(&Line[4]), Client);
+	if (!std::strncmp(Line.c_str(), "POST", 4))
+			;
+}
+
+
+void ServerWeb::RecvLoop(const int Client)
 {
 	ssize_t status;
 	char buffer[READ_BUFFER];
-	std::string Line;
-	while (true)
+	std::string Data;
+	while (1)
 	{
 		status = recv(Client, buffer, sizeof(buffer), 0); // return 2 caractere en plus qui indique une fin de ligne " Carriage Return Line Feed"
 		if (status > 0)
-			Line.append(buffer, status);
-		else if (status == 0)
-			break;
-		else 
-            return -1; // attention j'ai pas le droit t'utiliser errno donc, peut etre faut modifier des truc ici, car si faut ya pas d'erreur et juste le yenyen il a pas encore envoyer
+			Data.append(buffer, status);
+		else if (status <= 0)
+			break; // if -1 attention j'ai pas le droit t'utiliser errno donc, peut etre faut modifier des truc ici, car si faut ya pas d'erreur et juste le yenyen il a pas encore envoyer
 	}
-	std::cout << "\033[31m" << "READ: " << "\033[0m" << Line << std::endl; // parser requete envoye bonne page ect.. 
-	return 0;
+	this->RequestParsing(Data, Client);
 }
 
 void ServerWeb::ReceiveData(const struct epoll_event &events)

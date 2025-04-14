@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DELETE Example</title>
+    <link rel="stylesheet" href="style.css">
+    <script>
+        function sendDeleteRequest() {
+            fetch('/delete-this', {
+                method: 'DELETE'
+            })
+            .then(res => res.text())
+            .then(text => alert('Server response: ' + text))
+            .catch(err => alert('Error: ' + err));
+        }
+    </script>
+</head>
+<body>
+    <h1>DELETE Example</h1>
+    <button onclick="sendDeleteRequest()">Send DELETE Request</button>
+</body>
+</html>

@@ -12,7 +12,9 @@ class Config
         int GetPorts() const;
         const std::string & GetRoot() const;
         const std::string &Get404() const;
+        const std::string &GetIndex() const ;
     private:
+        std::string index;
         std::string Error404Path;
         std::string root;
         int ports;

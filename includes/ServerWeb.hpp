@@ -13,7 +13,6 @@
 #define NOT_FOUND_404 "<html><body><h1>404 Not Found</h1><p>Page introuvable</p></body></html>"
 #define READ_BUFFER 4096
 const std::string intTostring(const int n);
-
 class ServerWeb
 {
     public:
@@ -26,7 +25,7 @@ class ServerWeb
         const Config config;
         Socket socket;
         static int running;
-        int RecvLoop(const int Client);
+        void RecvLoop(const int Client);
         int Epoll_Wait();
         static void SignalHandler(int Sig);
         void ManageSignals(bool flag);
@@ -44,5 +43,8 @@ class ServerWeb
         void CloseEpoll();
         void EpollInit();
         void ReceiveData(const struct epoll_event &events);
+        void RequestParsing(std::string Line, const int Client);
+        void GetMethod(std::string Line, const int Client);
+        std::string GetPath(std::string line);
 
 };

@@ -8,6 +8,7 @@ const std::string & Config::GetRoot() const {return this->root;}
 
 const std::string &Config::Get404() const {return this->Error404Path;}
 
+const std::string &Config::GetIndex() const {return this->index;}
 
 
 Config::Config(int ac, char **av)
@@ -17,8 +18,10 @@ Config::Config(int ac, char **av)
     this->address.sin_addr.s_addr = INADDR_ANY;
     this->address.sin_port = htons(8080);
     this->ports = 8080;
-    this->root = "www/default/index.html";
+    this->root = "www/test/";
+    this->index = "index.html";
     this->Error404Path = "www/default/errors/404.html";
+
     if (ac == 1)
     {
         std::ifstream default_conf("conf/default.conf");
