@@ -66,7 +66,7 @@ std::string ServerWeb::BuildHttpHeader(const int StatusCode, const std::string& 
     return header;
 }
 
-std::string ServerWeb::BuildBody(std::string FilePath, int &StatusCode)
+std::string ServerWeb::BuildBody(std::string &FilePath, int &StatusCode)
 {
 	std::ifstream file(FilePath.c_str());
 	if (!file)
@@ -85,11 +85,12 @@ std::string ServerWeb::GetContentType(const std::string& path)
 {
     std::size_t dot = path.find_last_of(".");
     if (dot == std::string::npos)
-        return "application/octet-stream"; // par default 
+    	return "application/octet-stream"; // par default 
 
     std::string ext = path.substr(dot + 1);
+	std::cout << path << std::endl;
     if (ext == "html" || ext == "htm")
-        return "text/html";
+    	return "text/html";
     else if (ext == "css")
         return "text/css";
     else if (ext == "js")
@@ -149,11 +150,13 @@ void ServerWeb::GetMethod(std::string path, const int Client)
 {
 	int statuscode = 200;
 	std::string body;
+	std::string CompletePath;
 	if (!path[1])
-		body = this->BuildBody(this->config.GetRoot() + "/" + this->config.GetIndex(), statuscode);
+		CompletePath = this->config.GetRoot() + "/" + this->config.GetIndex();
 	else
-		body = this->BuildBody(this->config.GetRoot() + path, statuscode);
-	this->Send(Client, statuscode, this->GetContentType(this->config.GetRoot() + this->config.GetIndex()), body);
+		CompletePath = this->config.GetRoot() + path;
+	body = this->BuildBody(CompletePath, statuscode);
+	this->Send(Client, statuscode,this->GetContentType(CompletePath), body);
 }
 
 std::string ServerWeb::GetPath(std::string Line)
@@ -181,7 +184,7 @@ void ServerWeb::RequestParsing(std::string Line, const int Client)
 		this->DeleteMethod(this->config.GetRoot() + this->GetPath(&Line[7]), Client);
 }
 
-
+// JE DOIT TOUT REFAIRE, IL FAUT UTILISER FD_SET, FD_CLR, FD_ISSET, FD_ZERO
 void ServerWeb::RecvLoop(const int Client)
 {
 	ssize_t status;
@@ -192,7 +195,7 @@ void ServerWeb::RecvLoop(const int Client)
 		status = recv(Client, buffer, sizeof(buffer), 0); // return 2 caractere en plus qui indique une fin de ligne " Carriage Return Line Feed"
 		if (status > 0)
 			Data.append(buffer, status);
-		else if (status <= 0)
+		else if (status <=	 0)
 			break; // if -1 attention j'ai pas le droit t'utiliser errno donc, peut etre faut modifier des truc ici, car si faut ya pas d'erreur et juste le yenyen il a pas encore envoyer
 	}
 	// std::cout << Data << std::endl;

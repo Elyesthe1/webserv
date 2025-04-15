@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Blackjack - Webserv Casino</title>
+  <style>
+    body {
+      background-color: #0f5132;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
+      margin: 0;
+    }
+
+    header {
+      background-color: #000;
+      color: #ffd700;
+      padding: 20px;
+      font-size: 36px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .balance {
+      font-size: 20px;
+      margin-top: 10px;
+    }
+
+    .game-area {
+      margin: 40px auto;
+      max-width: 1000px;
+      background: #14532d;
+      border-radius: 16px;
+      padding: 30px;
+      box-shadow: 0 0 20px #000;
+    }
+
+    .dealer, .player {
+      margin-bottom: 40px;
+    }
+
+    .cards {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .cards img {
+      width: 100px;
+      height: 145px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px #000;
+      animation: draw 0.3s ease-in-out;
+    }
+
+    @keyframes draw {
+      from { transform: scale(0.3); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .actions button {
+      padding: 12px 25px;
+      margin: 10px;
+      font-size: 18px;
+      border: none;
+      border-radius: 8px;
+      background-color: #ffd700;
+      color: #000;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .actions button:hover {
+      background-color: #e5c100;
+    }
+
+    #message {
+      font-size: 24px;
+      margin-top: 20px;
+      font-weight: bold;
+      color: #ff6666;
+    }
+
+    .croupier-pic {
+      width: 100px;
+      border-radius: 50%;
+      margin-bottom: 10px;
+      box-shadow: 0 0 10px #000;
+    }
+
+    .score {
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+
+<header>♠️ Webserv Casino - Blackjack ♣️</header>
+
+<div class="balance">💰 Solde : <span id="balance">100</span>€</div>
+
+<div class="game-area">
+  <div class="dealer">
+    <img src="https://cdn-icons-png.flaticon.com/512/3575/3575127.png" alt="Croupier" class="croupier-pic" />
+    <h2>Croupier <span class="score">(<span id="dealer-score">0</span>)</span></h2>
+    <div id="dealer-cards" class="cards"></div>
+  </div>
+
+  <div class="player">
+    <h2>Vous <span class="score">(<span id="player-score">0</span>)</span></h2>
+    <div id="player-cards" class="cards"></div>
+  </div>
+
+  <div class="actions">
+    <button onclick="hit()">Tirer</button>
+    <button onclick="stand()">Rester</button>
+    <button onclick="restart()">Rejouer</button>
+  </div>
+
+  <div id="message"></div>
+</div>
+
+<script>
+  const playerCardsEl = document.getElementById("player-cards");
+  const dealerCardsEl = document.getElementById("dealer-cards");
+  const playerScoreEl = document.getElementById("player-score");
+  const dealerScoreEl = document.getElementById("dealer-score");
+  const balanceEl = document.getElementById("balance");
+  const messageEl = document.getElementById("message");
+
+  let playerHand = [], dealerHand = [], balance = 100;
+  let deck = [];
+
+  const cardValues = {
+    "A": 11, "2": 2, "3": 3, "4": 4, "5": 5,
+    "6": 6, "7": 7, "8": 8, "9": 9, "10": 10,
+    "J": 10, "Q": 10, "K": 10
+  };
+
+  function createDeck() {
+    const suits = ["S", "H", "D", "C"];
+    const values = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+    deck = [];
+    for (let suit of suits) {
+      for (let value of values) {
+        deck.push({ value, suit });
+      }
+    }
+    deck.sort(() => Math.random() - 0.5);
+  }
+
+  function cardImage(card) {
+    return `https://raw.githubusercontent.com/hayeah/playing-cards-assets/master/png/${card.value}${card.suit}.png`;
+  }
+
+  function drawCard() {
+    return deck.pop();
+  }
+
+  function calcScore(hand) {
+    let score = 0, aces = 0;
+    for (let card of hand) {
+      score += cardValues[card.value];
+      if (card.value === "A") aces++;
+    }
+    while (score > 21 && aces > 0) {
+      score -= 10;
+      aces--;
+    }
+    return score;
+  }
+
+  function render() {
+    playerCardsEl.innerHTML = "";
+    dealerCardsEl.innerHTML = "";
+
+    for (let card of playerHand) {
+      const img = document.createElement("img");
+      img.src = cardImage(card);
+      playerCardsEl.appendChild(img);
+    }
+
+    for (let card of dealerHand) {
+      const img = document.createElement("img");
+      img.src = cardImage(card);
+      dealerCardsEl.appendChild(img);
+    }
+
+    const playerScore = calcScore(playerHand);
+    const dealerScore = calcScore(dealerHand);
+
+    playerScoreEl.textContent = playerScore;
+    dealerScoreEl.textContent = dealerScore;
+    balanceEl.textContent = balance;
+  }
+
+  function hit() {
+    playerHand.push(drawCard());
+    render();
+    const score = calcScore(playerHand);
+    if (score > 21) {
+      endGame("Perdu !");
+    }
+  }
+
+  function stand() {
+    while (calcScore(dealerHand) < 17) {
+      dealerHand.push(drawCard());
+    }
+    const playerScore = calcScore(playerHand);
+    const dealerScore = calcScore(dealerHand);
+
+    if (dealerScore > 21 || playerScore > dealerScore) {
+      endGame("Gagné !");
+    } else if (playerScore < dealerScore) {
+      endGame("Perdu !");
+    } else {
+      endGame("Égalité !");
+    }
+  }
+
+  function endGame(result) {
+    messageEl.textContent = result;
+    if (result === "Gagné !") balance += 10;
+    else if (result === "Perdu !") balance -= 10;
+    render();
+  }
+
+  function restart() {
+    messageEl.textContent = "";
+    createDeck();
+    playerHand = [drawCard(), drawCard()];
+    dealerHand = [drawCard()];
+    render();
+  }
+
+  restart();
+</script>
+
+</body>
+</html>

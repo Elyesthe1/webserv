@@ -1,0 +1,32 @@
+body {
+	background-color: black;
+	color: lime;
+	font-family: 'Courier New', monospace;
+	text-align: center;
+	padding-top: 50px;
+  }
+  
+  .casino h1 {
+	font-size: 3em;
+	color: gold;
+	text-shadow: 0 0 10px red;
+  }
+  
+  button {
+	background-color: red;
+	color: white;
+	border: none;
+	font-size: 2em;
+	padding: 10px 20px;
+	margin-top: 20px;
+	border-radius: 10px;
+	cursor: pointer;
+  }
+  
+  .roulette {
+	font-size: 5em;
+	margin: 30px;
+	color: white;
+	text-shadow: 0 0 20px lime;
+  }
+  

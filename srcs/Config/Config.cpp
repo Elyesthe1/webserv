@@ -18,9 +18,9 @@ Config::Config(int ac, char **av)
     this->address.sin_addr.s_addr = INADDR_ANY;
     this->address.sin_port = htons(8080);
     this->ports = 8080;
-    this->root = "www/test";
+    this->root = "www/casino";
     this->index = "index.html";
-    this->Error404Path = "www/test/errors/404.html";
+    this->Error404Path = "www/default/errors/404.html";
 
     if (ac == 1)
     {

@@ -34,7 +34,7 @@ class ServerWeb
         std::string BuildHttpResponse(int statusCode, const std::string& contentType, const std::string& body);
         std::string BuildHttpHeader(const int StatusCode, const std::string& ContentType, const size_t ContentLen);
         std::string Send404Page();
-        std::string BuildBody(std::string FilePath, int &StatusCode);
+        std::string BuildBody(std::string &FilePath, int &StatusCode);
         void Send(int clientFd, int statusCode, const std::string& contentType, const std::string& body);
         void ClientHandler( const struct epoll_event &events);
         void DisconnectClient(const struct epoll_event &events);
