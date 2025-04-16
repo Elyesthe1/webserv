@@ -12,6 +12,7 @@
 #include <signal.h>
 #include <sys/stat.h>
 #include <cstdio>
+#include <map>
 #define NOT_FOUND_404 "<html><body><h1>404 Not Found</h1><p>Page introuvable</p></body></html>"
 #define READ_BUFFER 4096
 const std::string intTostring(const int n);
@@ -22,12 +23,13 @@ class ServerWeb
         void run();
         ~ServerWeb();
     private:
+        std::map<int, Client> Vec_Client;
 	    struct epoll_event events[1024];
         int epoll;
         const Config config;
         Socket socket;
         static int running;
-        void RecvLoop(const int Client);
+        int RecvLoop(const int Client);
         int Epoll_Wait();
         static void SignalHandler(int Sig);
         void ManageSignals(bool flag);
@@ -50,5 +52,8 @@ class ServerWeb
         void DeleteMethod(std::string Line, const int Client);
         std::string GetPath(std::string line);
         std::string GetContentType(const std::string& path);
+        bool  IsRequestComplete(const std::string& request);
+        void PostMethod(std::string path, std::string body, const int Client);
+
 
 };

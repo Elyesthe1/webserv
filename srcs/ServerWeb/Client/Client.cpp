@@ -1,16 +1,13 @@
 #include "../../../includes/Client.hpp"
 
-Client::Client(const int fd, struct sockaddr_in addr) : ClientFD(fd), address(addr) {}
+// Client::Client(const int fd, struct sockaddr_in addr) : ClientFD(fd), address(addr) {}
 
 // int Client::GetClientFd() const {return this->ClientFD;}
 
 Client::~Client()
 {
-    this->CloseClientFd();
 }
 
-void Client::CloseClientFd()
+Client::Client()
 {
-    if (this->ClientFD != -1)
-        close(this->ClientFD);
 }

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Test DELETE</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #1e1e1e;
+      color: white;
+      text-align: center;
+      margin-top: 100px;
+    }
+    button {
+      background: #ff4d4d;
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      font-size: 20px;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    #result {
+      margin-top: 20px;
+      font-size: 18px;
+      color: #0f0;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🗑️ Supprimer un fichier</h1>
+<p>Clique sur le bouton pour envoyer une requête DELETE vers <code>/delete_me.txt</code></p>
+
+<button onclick="deleteFile()">Supprimer</button>
+<div id="result"></div>
+
+<script>
+function deleteFile() {
+  fetch("/delete_me.txt", {
+    method: "DELETE"
+  })
+  .then(response => {
+    if (response.ok)
+      document.getElementById("result").innerText = "✅ Fichier supprimé avec succès.";
+    else
+      document.getElementById("result").innerText = "❌ Erreur : " + response.status;
+  })
+  .catch(err => {
+    document.getElementById("result").innerText = "Erreur réseau : " + err;
+  });
+}
+</script>
+
+</body>
+</html>

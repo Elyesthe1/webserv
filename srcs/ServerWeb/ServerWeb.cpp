@@ -88,7 +88,6 @@ std::string ServerWeb::GetContentType(const std::string& path)
     	return "application/octet-stream"; // par default 
 
     std::string ext = path.substr(dot + 1);
-	std::cout << path << std::endl;
     if (ext == "html" || ext == "htm")
     	return "text/html";
     else if (ext == "css")
@@ -140,6 +139,7 @@ void ServerWeb::DisconnectClient(const struct epoll_event &events)
 	if (epoll_ctl(this->epoll, EPOLL_CTL_DEL, events.data.fd,this->events) == -1) // pas obligele kernel le fait a ta place
 		Logger::WarningLog("epoll_ctl", "Remove client to epoll failed" + std::string(strerror(errno)));
 	close(events.data.fd);
+	this->Vec_Client.erase(events.data.fd);
 	if (events.events & EPOLLERR)
 		Logger::WarningLog("Client", "⚠️ Unexpected disconnection (fd: " + intTostring(events.data.fd) + ")");
 	else
@@ -161,7 +161,9 @@ void ServerWeb::GetMethod(std::string path, const int Client)
 
 std::string ServerWeb::GetPath(std::string Line)
 { 
-	int pos = Line.find(' ', 0);
+	std::size_t pos = Line.find(' ', 0);
+	if (pos == std::string::npos)
+		return "/";
 	return Line.substr(0, pos);
 }
 
@@ -170,42 +172,114 @@ void ServerWeb::DeleteMethod(std::string path, const int Client)
 	struct stat buffer;
     if (stat(path.c_str(), &buffer) == -1)
 		this->Send(Client, 404, "", "");
-	if (std::remove(path.c_str()) != 0)
+	else if (std::remove(path.c_str()) != 0)
 		this->Send(Client, 403, "", "");
 	else
 		this->Send(Client, 204, "", "");
 }
 
-void ServerWeb::RequestParsing(std::string Line, const int Client)
+void ServerWeb::PostMethod(std::string path, std::string body, const int Client)
 {
-	if (!std::strncmp(Line.c_str(), "GET", 3))
-		this->GetMethod(this->GetPath(&Line[4]), Client);
-	if (!std::strncmp(Line.c_str(), "DELETE", 6))
-		this->DeleteMethod(this->config.GetRoot() + this->GetPath(&Line[7]), Client);
+	int pos = body.find("filename=");
+	std::string name = path + "/" +  body.substr(pos + 11, body.find("\"", pos + 11) -  (pos + 11 )) ;
+	std::ofstream of(name.c_str());	
+	int contentstart = body.find("\r\n", pos);
+	// of.write()
+}
+
+void ServerWeb::RequestParsing(std::string Request, const int Client)
+{
+	// std::cout << Request << std::endl;
+	if (!std::strncmp(Request.c_str(), "GET", 3))
+		this->GetMethod(this->GetPath(&Request[4]), Client);
+	if (!std::strncmp(Request.c_str(), "DELETE", 6))
+		this->DeleteMethod(this->config.GetRoot() + this->GetPath(&Request[7]), Client);
+	if (!std::strncmp(Request.c_str(), "POST", 4))
+		this->PostMethod(this->config.GetUploadPath(), Request, Client);
 }
 
 // JE DOIT TOUT REFAIRE, IL FAUT UTILISER FD_SET, FD_CLR, FD_ISSET, FD_ZERO
-void ServerWeb::RecvLoop(const int Client)
+// void ServerWeb::RecvLoop(const int Client)
+// {
+// 	ssize_t status;
+// 	char buffer[READ_BUFFER];
+// 	std::string Data;
+// 	std::size_t contentsize;
+// 	std::string body;
+// 	while (1)
+// 	{
+// 		status = recv(Client, buffer, sizeof(buffer), 0); // return 2 caractere en plus qui indique une fin de ligne " Carriage Return Line Feed"
+// 		if (status > 0)
+// 			Data.append(buffer, status);
+// 		contentsize = Data.find("Content-Length:", 0);
+// 		if (contentsize != std::string::npos)
+// 		{
+// 			int length = std::atoi(&Data[contentsize + 15]);
+// 			while (length)
+// 			{
+// 				status = recv(Client, buffer, sizeof(buffer), 0); // return 2 caractere en plus qui indique une fin de ligne " Carriage Return Line Feed"
+// 				if (status > 0)
+// 				{
+// 					body.append(buffer, status);
+// 					length -= status;
+// 				}
+// 			}
+// 		}
+// 		if (status <= 0)
+// 			break; // if -1 attention j'ai pas le droit t'utiliser errno donc, peut etre faut modifier des truc ici, car si faut ya pas d'erreur et juste le yenyen il a pas encore envoyer
+// 	}
+// 	std::cout << body << std::endl;
+// 	std::cout << Data << std::endl;
+// 	this->RequestParsing(Data, Client);
+// }
+
+bool ServerWeb::IsRequestComplete(const std::string& request)
+{
+	std::size_t pos = request.find("\r\n\r\n");
+	if (pos == std::string::npos)
+		return false;
+	std::size_t contentLengthPos = request.find("Content-Length:");
+	if (contentLengthPos != std::string::npos)
+	{
+		int length = std::atoi(request.c_str() + contentLengthPos + 15);
+		std::size_t bodyStart = request.find("\r\n\r\n") + 4;
+		if (request.size() >= bodyStart + length)
+			return true;
+		else
+			return false;
+	}
+	return true;
+}
+
+
+// faire vector 
+int ServerWeb::RecvLoop(const int Client)
 {
 	ssize_t status;
 	char buffer[READ_BUFFER];
 	std::string Data;
-	while (1)
+	while ((status = recv(Client, buffer, sizeof(buffer), 0)) > 0)
+		Data.append(buffer, status);
+	this->Vec_Client[Client].data += Data;
+	if (status == 0)
 	{
-		status = recv(Client, buffer, sizeof(buffer), 0); // return 2 caractere en plus qui indique une fin de ligne " Carriage Return Line Feed"
-		if (status > 0)
-			Data.append(buffer, status);
-		else if (status <=	 0)
-			break; // if -1 attention j'ai pas le droit t'utiliser errno donc, peut etre faut modifier des truc ici, car si faut ya pas d'erreur et juste le yenyen il a pas encore envoyer
+		this->RequestParsing(this->Vec_Client[Client].data, Client);
+		this->Vec_Client[Client].data.clear();
+		return 0;
 	}
-	// std::cout << Data << std::endl;
-	this->RequestParsing(Data, Client);
+	else if (status == -1 && this->IsRequestComplete(this->Vec_Client[Client].data))
+	{
+		this->RequestParsing(this->Vec_Client[Client].data, Client);
+		this->Vec_Client[Client].data.clear();
+		return 0;
+	}
+	return 1;
 }
 
 void ServerWeb::ReceiveData(const struct epoll_event &events)
 {
-	this->RecvLoop(events.data.fd);
-	this->DisconnectClient(events);
+	if (this->RecvLoop(events.data.fd) == 0)
+		this->DisconnectClient(events);
 }
 
 void ServerWeb::ClientHandler(const struct epoll_event &events)
@@ -279,3 +353,4 @@ void ServerWeb::run()
 			Logger::ErrorLog("Server", "A critical error occurred. The server will shut down. Reason: " + std::string(e.what()));
 	}
 }
+

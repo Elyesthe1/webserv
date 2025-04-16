@@ -10,6 +10,9 @@ const std::string &Config::Get404() const {return this->Error404Path;}
 
 std::string Config::GetIndex() const {return this->index;}
 
+const std::string Config::GetUploadPath() const {return this->UploadPath;}
+
+
 
 Config::Config(int ac, char **av)
 {
@@ -21,7 +24,7 @@ Config::Config(int ac, char **av)
     this->root = "www/casino";
     this->index = "index.html";
     this->Error404Path = "www/default/errors/404.html";
-
+    this->UploadPath = "www/casino/uploads";
     if (ac == 1)
     {
         std::ifstream default_conf("conf/default.conf");

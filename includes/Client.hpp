@@ -6,11 +6,9 @@ class Client
 {
     public:
         // int GetClientFd() const;
-        Client(const int fd, struct sockaddr_in addr);
+        Client();
+        // Client(const int fd, struct sockaddr_in addr);
         ~Client();
+        std::string data;
     private:
-        const std::string ip;
-        void CloseClientFd();
-        const int ClientFD;
-        const struct sockaddr_in address;
 };

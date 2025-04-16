@@ -13,7 +13,10 @@ class Config
         std::string GetRoot() const;
         const std::string &Get404() const;
         std::string GetIndex() const ;
+        const std::string GetUploadPath() const ;
+
     private:
+        std::string UploadPath;
         std::string index;
         std::string Error404Path;
         std::string root;
