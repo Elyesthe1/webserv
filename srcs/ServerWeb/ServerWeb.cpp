@@ -56,6 +56,8 @@ std::string ServerWeb::BuildHttpHeader(const int StatusCode, const std::string& 
         case 404: statusText = "Not Found"; break;
 		case 204: statusText = "No Content"; break;
 		case 403: statusText = "Forbidden"; break;
+		case 400: statusText = "Bad Request"; break;
+		case 500: statusText = "Internal Server Error"; break;
 		default:  statusText = "Unknown"; break;
     }
     std::string header = "HTTP/1.1 " + intTostring(StatusCode) + " " + statusText + "\r\n";
@@ -140,10 +142,7 @@ void ServerWeb::DisconnectClient(const struct epoll_event &events)
 		Logger::WarningLog("epoll_ctl", "Remove client to epoll failed" + std::string(strerror(errno)));
 	close(events.data.fd);
 	this->Vec_Client.erase(events.data.fd);
-	if (events.events & EPOLLERR)
-		Logger::WarningLog("Client", "⚠️ Unexpected disconnection (fd: " + intTostring(events.data.fd) + ")");
-	else
-		Logger::InfoLog("Client", "Client disconnected gracefully (fd: " + intTostring(events.data.fd) + ")");
+	Logger::InfoLog("Client", "Client disconnected gracefully (fd: " + intTostring(events.data.fd) + ")");
 }
 
 void ServerWeb::GetMethod(std::string path, const int Client)
@@ -178,18 +177,43 @@ void ServerWeb::DeleteMethod(std::string path, const int Client)
 		this->Send(Client, 204, "", "");
 }
 
-void ServerWeb::PostMethod(std::string path, std::string body, const int Client)
+void ServerWeb::PostMethod(std::string path, std::string Data, const int Client)
 {
-	int pos = body.find("filename=");
-	std::string name = path + "/" +  body.substr(pos + 11, body.find("\"", pos + 11) -  (pos + 11 )) ;
-	std::ofstream of(name.c_str());	
-	int contentstart = body.find("\r\n", pos);
-	// of.write()
+    size_t BoundaryStart = Data.find("boundary=");
+    if (BoundaryStart == std::string::npos)
+        return this->Send(Client, 400, "", "Missing boundary");
+    size_t boundaryEnd = Data.find("\r\n", BoundaryStart);
+    std::string boundary = "--" + Data.substr(BoundaryStart + 9, boundaryEnd - (BoundaryStart + 9)); 
+    size_t File = Data.find("filename=");
+    if (File == std::string::npos)
+        return this->Send(Client, 400, "", "Missing filename");
+
+    size_t startName = Data.find("\"", File + 9) + 1;
+    size_t endName = Data.find("\"", startName);
+    std::string filename = Data.substr(startName, endName - startName);
+    std::string fullpath = path + "/" + filename;
+
+    size_t contentStart = Data.find("\r\n\r\n", endName);
+    if (contentStart == std::string::npos)
+        return this->Send(Client, 400, "", "Missing content start");
+    contentStart += 4;
+
+    size_t contentEnd = Data.find(boundary, contentStart);
+    if (contentEnd == std::string::npos)
+		return this->Send(Client, 400, "", "Missing content end");
+
+    std::ofstream of(fullpath.c_str(), std::ios::binary);
+	if (!of)
+		return this->Send(Client, 500, "", "Failed to open file");
+    of.write(Data.c_str() + contentStart, contentEnd - contentStart - 2); // -2 pour retirer \r\n avant boundary
+    of.close();
+	this->Send(Client, 204, "", "");
 }
+
 
 void ServerWeb::RequestParsing(std::string Request, const int Client)
 {
-	// std::cout << Request << std::endl;
+	std::cout << Request << std::endl;
 	if (!std::strncmp(Request.c_str(), "GET", 3))
 		this->GetMethod(this->GetPath(&Request[4]), Client);
 	if (!std::strncmp(Request.c_str(), "DELETE", 6))
@@ -197,41 +221,6 @@ void ServerWeb::RequestParsing(std::string Request, const int Client)
 	if (!std::strncmp(Request.c_str(), "POST", 4))
 		this->PostMethod(this->config.GetUploadPath(), Request, Client);
 }
-
-// JE DOIT TOUT REFAIRE, IL FAUT UTILISER FD_SET, FD_CLR, FD_ISSET, FD_ZERO
-// void ServerWeb::RecvLoop(const int Client)
-// {
-// 	ssize_t status;
-// 	char buffer[READ_BUFFER];
-// 	std::string Data;
-// 	std::size_t contentsize;
-// 	std::string body;
-// 	while (1)
-// 	{
-// 		status = recv(Client, buffer, sizeof(buffer), 0); // return 2 caractere en plus qui indique une fin de ligne " Carriage Return Line Feed"
-// 		if (status > 0)
-// 			Data.append(buffer, status);
-// 		contentsize = Data.find("Content-Length:", 0);
-// 		if (contentsize != std::string::npos)
-// 		{
-// 			int length = std::atoi(&Data[contentsize + 15]);
-// 			while (length)
-// 			{
-// 				status = recv(Client, buffer, sizeof(buffer), 0); // return 2 caractere en plus qui indique une fin de ligne " Carriage Return Line Feed"
-// 				if (status > 0)
-// 				{
-// 					body.append(buffer, status);
-// 					length -= status;
-// 				}
-// 			}
-// 		}
-// 		if (status <= 0)
-// 			break; // if -1 attention j'ai pas le droit t'utiliser errno donc, peut etre faut modifier des truc ici, car si faut ya pas d'erreur et juste le yenyen il a pas encore envoyer
-// 	}
-// 	std::cout << body << std::endl;
-// 	std::cout << Data << std::endl;
-// 	this->RequestParsing(Data, Client);
-// }
 
 bool ServerWeb::IsRequestComplete(const std::string& request)
 {
@@ -251,8 +240,6 @@ bool ServerWeb::IsRequestComplete(const std::string& request)
 	return true;
 }
 
-
-// faire vector 
 int ServerWeb::RecvLoop(const int Client)
 {
 	ssize_t status;
@@ -260,17 +247,17 @@ int ServerWeb::RecvLoop(const int Client)
 	std::string Data;
 	while ((status = recv(Client, buffer, sizeof(buffer), 0)) > 0)
 		Data.append(buffer, status);
-	this->Vec_Client[Client].data += Data;
+	this->Vec_Client[Client] += Data;
 	if (status == 0)
 	{
-		this->RequestParsing(this->Vec_Client[Client].data, Client);
-		this->Vec_Client[Client].data.clear();
+		this->RequestParsing(this->Vec_Client[Client], Client);
+		this->Vec_Client[Client].clear();
 		return 0;
 	}
-	else if (status == -1 && this->IsRequestComplete(this->Vec_Client[Client].data))
+	else if (status == -1 && this->IsRequestComplete(this->Vec_Client[Client]))
 	{
-		this->RequestParsing(this->Vec_Client[Client].data, Client);
-		this->Vec_Client[Client].data.clear();
+		this->RequestParsing(this->Vec_Client[Client], Client);
+		this->Vec_Client[Client].clear();
 		return 0;
 	}
 	return 1;

@@ -7,7 +7,6 @@
 #include "Config.hpp"
 #include <exception>
 #include <unistd.h>
-#include "Client.hpp"
 #include <cstring>
 #include <cstdlib>
 #include <fcntl.h>

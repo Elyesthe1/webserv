@@ -4,7 +4,6 @@
 #include <errno.h>
 #include "Socket.hpp"
 #include "Config.hpp"
-#include "Client.hpp"
 #include <map>
 #include "Logger.hpp"
 #include <sys/epoll.h>
@@ -23,7 +22,7 @@ class ServerWeb
         void run();
         ~ServerWeb();
     private:
-        std::map<int, Client> Vec_Client;
+        std::map<int, std::string> Vec_Client;
 	    struct epoll_event events[1024];
         int epoll;
         const Config config;
