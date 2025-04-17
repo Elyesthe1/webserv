@@ -19,7 +19,6 @@ class Socket
     public:
         Socket(const Config &config);
         ~Socket();
-        // Client AcceptClient();
         int AcceptClient();
         int GetFd() const ;
     private:

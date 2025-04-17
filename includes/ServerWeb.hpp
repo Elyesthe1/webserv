@@ -25,9 +25,11 @@ class ServerWeb
         std::map<int, std::string> Vec_Client;
 	    struct epoll_event events[1024];
         int epoll;
-        const Config config;
-        Socket socket;
         static int running;
+        const Config config;
+
+
+        Socket socket;
         int RecvLoop(const int Client);
         int Epoll_Wait();
         static void SignalHandler(int Sig);
@@ -53,6 +55,5 @@ class ServerWeb
         std::string GetContentType(const std::string& path);
         bool  IsRequestComplete(const std::string& request);
         void PostMethod(std::string path, std::string body, const int Client);
-
-
+        void CGIMethod(std::string path, const int Client);
 };

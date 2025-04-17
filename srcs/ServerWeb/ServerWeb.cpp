@@ -209,16 +209,26 @@ void ServerWeb::PostMethod(std::string path, std::string Data, const int Client)
     of.close();
 	this->Send(Client, 204, "", "");
 }
+void ServerWeb::CGIMethod(std::string path, const int Client)
+{
+
+}
 
 
 void ServerWeb::RequestParsing(std::string Request, const int Client)
 {
-	std::cout << Request << std::endl;
-	if (!std::strncmp(Request.c_str(), "GET", 3))
+	if ((!std::strncmp(Request.c_str(), "GET", 3) || !std::strncmp(Request.c_str(), "POST", 4)))
+	{
+		if (!std::strncmp(Request.c_str(), "GET", 3))
+			this->CGIMethod(this->GetPath(&Request[4]), Client);
+		else
+			this->CGIMethod(this->GetPath(&Request[5]), Client);
+	}
+	else if (!std::strncmp(Request.c_str(), "GET", 3))
 		this->GetMethod(this->GetPath(&Request[4]), Client);
-	if (!std::strncmp(Request.c_str(), "DELETE", 6))
+	else if (!std::strncmp(Request.c_str(), "DELETE", 6))
 		this->DeleteMethod(this->config.GetRoot() + this->GetPath(&Request[7]), Client);
-	if (!std::strncmp(Request.c_str(), "POST", 4))
+	else if (!std::strncmp(Request.c_str(), "POST", 4))
 		this->PostMethod(this->config.GetUploadPath(), Request, Client);
 }
 
@@ -244,10 +254,8 @@ int ServerWeb::RecvLoop(const int Client)
 {
 	ssize_t status;
 	char buffer[READ_BUFFER];
-	std::string Data;
 	while ((status = recv(Client, buffer, sizeof(buffer), 0)) > 0)
-		Data.append(buffer, status);
-	this->Vec_Client[Client] += Data;
+		this->Vec_Client[Client].append(buffer, status);
 	if (status == 0)
 	{
 		this->RequestParsing(this->Vec_Client[Client], Client);
