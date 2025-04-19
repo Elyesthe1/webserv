@@ -7,12 +7,25 @@
 </head>
 <body>
   <h1>🚀 Welcome to Webserv!</h1>
-  <p><a href="/about.html">About</a></p>
-  <p><a href="/upload.html">Test file upload</a></p>
-  <p><a href="/delete_me.html">Test DELETE method</a></p>
-  <p><a href="/doesnotexist">Trigger 404</a></p>
-  <p><a href="/form-handler.py">Run CGI</a></p>
-  <p><a href="/slot.html">🎰 Slot Machine</a></p>
-  <p><a href="/blackjack.html">🃏 Jouer au Blackjack</a></p>
+  <script>
+    document.cookie = "visited=true";
+    if (!document.cookie.includes("visited")) {
+      alert("Bienvenue nouveau visiteur ! 🎉");
+    }
+  </script>
+  <nav>
+    <ul>
+      <li><a href="/about.html">About</a></li>
+      <li><a href="/upload.html">Test file upload</a></li>
+      <li><a href="/delete_me.html">Test DELETE method</a></li>
+      <li><a href="/doesnotexist">Trigger 404</a></li>
+      <li><a href="/form-handler.py">Python CGI</a></li>
+      <li><a href="/form-get.html">GET Form CGI</a></li>
+      <li><a href="/form-post.html">POST Form CGI</a></li>
+      <li><a href="/form-handler.php">PHP CGI</a></li>
+      <li><a href="/slot.html">🎰 Slot Machine</a></li>
+      <li><a href="/blackjack.html">🃏 Jouer au Blackjack</a></li>
+    </ul>
+  </nav>
 </body>
 </html>

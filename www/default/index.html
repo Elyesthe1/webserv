@@ -1,26 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Bienvenue sur mon serveur</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f3f3f3;
-            color: #333;
-            text-align: center;
-            margin-top: 100px;
-        }
-        h1 {
-            color: #4CAF50;
-        }
-        p {
-            font-size: 18px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Webserv Test Page</title>
+  <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <h1>👋 Bienvenue !</h1>
-    <p>Vous êtes bien connecté à mon serveur web 😎</p>
+  <h1>Webserv Test Page</h1>
+
+  <section>
+    <h2>GET CGI Test</h2>
+    <form action="/cgi-bin/get.py" method="get">
+      <label for="name">Your Name:</label>
+      <input type="text" name="name" id="name">
+      <button type="submit">Send</button>
+    </form>
+  </section>
+
+  <section>
+    <h2>POST CGI Test</h2>
+    <form action="/cgi-bin/post.py" method="post">
+      <label for="email">Email:</label>
+      <input type="email" name="email" id="email">
+      <button type="submit">Send</button>
+    </form>
+  </section>
+
+  <section>
+    <h2>Upload Test (Drag & Drop)</h2>
+    <div id="drop-area">
+      <form class="upload-form" action="/upload" method="post" enctype="multipart/form-data">
+        <p>Drag and drop a file here or click</p>
+        <input type="file" name="file" id="fileElem">
+        <button type="submit">Upload</button>
+      </form>
+    </div>
+  </section>
+
+  <section>
+    <h2>Blackjack</h2>
+    <a href="/blackjack/index.html">Play Blackjack</a>
+  </section>
+
+  <script src="/static/script.js"></script>
 </body>
 </html>

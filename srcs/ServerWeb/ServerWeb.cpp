@@ -49,18 +49,18 @@ std::string ServerWeb::Send404Page()
 
 std::string ServerWeb::BuildHttpHeader(const int StatusCode, const std::string& ContentType, const size_t ContentLen) 
 {
-    std::string statusText;
+    std::string Status;
     switch (StatusCode) 
 	{
-        case 200: statusText = "OK"; break;
-        case 404: statusText = "Not Found"; break;
-		case 204: statusText = "No Content"; break;
-		case 403: statusText = "Forbidden"; break;
-		case 400: statusText = "Bad Request"; break;
-		case 500: statusText = "Internal Server Error"; break;
-		default:  statusText = "Unknown"; break;
+        case 200: Status = "OK"; break;
+        case 404: Status = "Not Found"; break;
+		case 204: Status = "No Content"; break;
+		case 403: Status = "Forbidden"; break;
+		case 400: Status = "Bad Request"; break;
+		case 500: Status = "Internal Server Error"; break;
+		default:  Status = "Unknown"; break;
     }
-    std::string header = "HTTP/1.1 " + intTostring(StatusCode) + " " + statusText + "\r\n";
+    std::string header = "HTTP/1.1 " + intTostring(StatusCode) + " " + Status + "\r\n";
     header += "Content-Type: " + ContentType + "\r\n";
     header += "Content-Length: " +	intTostring(ContentLen) + "\r\n";
     header += "Connection: close\r\n";
@@ -205,31 +205,36 @@ void ServerWeb::PostMethod(std::string path, std::string Data, const int Client)
     std::ofstream of(fullpath.c_str(), std::ios::binary);
 	if (!of)
 		return this->Send(Client, 500, "", "Failed to open file");
-    of.write(Data.c_str() + contentStart, contentEnd - contentStart - 2); // -2 pour retirer \r\n avant boundary
+    of.write(Data.c_str() + contentStart, contentEnd - contentStart - 2);
     of.close();
 	this->Send(Client, 204, "", "");
 }
-void ServerWeb::CGIMethod(std::string path, const int Client)
-{
 
+void ServerWeb::CGIMethod(std::string Data, const int Client)
+{
+	std::string exec = Data.find(".py") != std::string::npos ? "/usr/bin/python3" : "/usr/bin/php-cgi";
 }
 
 
 void ServerWeb::RequestParsing(std::string Request, const int Client)
 {
-	if ((!std::strncmp(Request.c_str(), "GET", 3) || !std::strncmp(Request.c_str(), "POST", 4)))
+	std::cout << Request << std::endl;
+	if (!std::strncmp(Request.c_str(), "GET", 3))
 	{
-		if (!std::strncmp(Request.c_str(), "GET", 3))
-			this->CGIMethod(this->GetPath(&Request[4]), Client);
+		if(Request.find(".py") != std::string::npos || Request.find(".php") != std::string::npos)
+			this->CGIMethod(Request, Client);
 		else
-			this->CGIMethod(this->GetPath(&Request[5]), Client);
+			this->GetMethod(this->GetPath(&Request[4]), Client);
 	}
-	else if (!std::strncmp(Request.c_str(), "GET", 3))
-		this->GetMethod(this->GetPath(&Request[4]), Client);
 	else if (!std::strncmp(Request.c_str(), "DELETE", 6))
 		this->DeleteMethod(this->config.GetRoot() + this->GetPath(&Request[7]), Client);
 	else if (!std::strncmp(Request.c_str(), "POST", 4))
-		this->PostMethod(this->config.GetUploadPath(), Request, Client);
+	{
+		if(Request.find(".py") != std::string::npos || Request.find(".php") != std::string::npos)
+			this->CGIMethod(Request, Client);
+		else
+			this->PostMethod(this->config.GetUploadPath(), Request, Client);
+	}
 }
 
 bool ServerWeb::IsRequestComplete(const std::string& request)
@@ -237,10 +242,10 @@ bool ServerWeb::IsRequestComplete(const std::string& request)
 	std::size_t pos = request.find("\r\n\r\n");
 	if (pos == std::string::npos)
 		return false;
-	std::size_t contentLengthPos = request.find("Content-Length:");
-	if (contentLengthPos != std::string::npos)
+	std::size_t contentLenPos = request.find("Content-Length:");
+	if (contentLenPos != std::string::npos)
 	{
-		int length = std::atoi(request.c_str() + contentLengthPos + 15);
+		int length = std::atoi(request.c_str() + contentLenPos + 15);
 		std::size_t bodyStart = request.find("\r\n\r\n") + 4;
 		if (request.size() >= bodyStart + length)
 			return true;

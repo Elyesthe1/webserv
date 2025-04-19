@@ -102,7 +102,7 @@
 
 <div class="game-area">
   <div class="dealer">
-    <img src="https://cdn-icons-png.flaticon.com/512/3575/3575127.png" alt="Croupier" class="croupier-pic" />
+    <img src="/static/croupier.png" alt="Croupier" class="croupier-pic" />
     <h2>Croupier <span class="score">(<span id="dealer-score">0</span>)</span></h2>
     <div id="dealer-cards" class="cards"></div>
   </div>
@@ -151,7 +151,9 @@
   }
 
   function cardImage(card) {
-    return `https://raw.githubusercontent.com/hayeah/playing-cards-assets/master/png/${card.value}${card.suit}.png`;
+    const suitMap = { "S": "spades", "H": "hearts", "D": "diamonds", "C": "clubs" };
+    const value = card.value === "10" ? "10" : card.value[0];
+    return `/static/cards/${value}_of_${suitMap[card.suit]}.png`;
   }
 
   function drawCard() {

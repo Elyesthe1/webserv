@@ -12,6 +12,7 @@
 #include <sys/stat.h>
 #include <cstdio>
 #include <map>
+#include <unistd.h>
 #define NOT_FOUND_404 "<html><body><h1>404 Not Found</h1><p>Page introuvable</p></body></html>"
 #define READ_BUFFER 4096
 const std::string intTostring(const int n);
