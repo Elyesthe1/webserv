@@ -1,29 +1,20 @@
+Faire les CGI GET + POST py et php
+faire que le serv reponde a selon le bon host designe
+
+tout ca pas fait :
+Setup des routes avec une ou plusieurs des règles/configurations suivantes (les
+    routes n’utiliseront pas de regexp) :
+    ◦ Définir une liste de méthodes HTTP acceptées pour la route.
+    ◦ Définir une redirection HTTP.
+    ◦ Définir un répertoire ou un fichier à partir duquel le fichier doit être recherché
+    (par exemple si l’url /kapouet est rootée sur /tmp/www, l’url /kapouet/pouic/toto/pouet
+    est /tmp/www/pouic/toto/pouet).
+    ◦ Activer ou désactiver le listing des répertoires.
+    ◦ Rendre la route capable d’accepter les fichiers téléversés et configurer où cela
+    doit être enregistré.
+
 // FAIRE ATTENDION DE PAS AVOIR UN THROW POUR UNE WARNING QUI FAIT QUITTER LE PROGRAM
 
 sudo chattr +i (arg) enlever les droit de suppresion d'un fichier -i inverse
 
-
-faire un makefile qui regroupe les .o dans un dossier obj
-// pas sure de le faire : pour logger faire emote zehma paneau pour warning, croix rouge pour error , ect .. 
-socketpair : permet de creer une pair de socket connecter 
-
-htons en gros convertie un entier 16bit en un format utiliser pour le reseau
-htonl un entier 32 bit ...
-ntohs pour unsigned 32
-ntohs pour unsigned 16
-
-fonction pour surveillers plusieurs fd de maniere non bloquante, en attendant qu``il soit pret pour lecture, ecriture ou si ils sont des exeption:
-select :le plus ancien, limite de fd definie par FD_SETSIZE(1024), pas tres performant
-poll: pas de limite de fd, plus flexible permet de gerer + facilement un grand nombre de fd, pas tres performant
-epoll: la plus recent, pas de limite, la plus opti pour gerer grand nombre de fd, tres performant, reserver sur linux
-kqueue : epoll mais sur macOS   
-
-accept : permet d''accepter une connection entrante et recevoir un socket pour communiquer avec le client 
-send : permet denvoyer des donne au client avec un socket quon a accepter
-recv : permet de lire des donne     
-connect: permet une connection un server via un socket 
-
-getaddrinfo : convertie un nom d hote ou address ip en une struct sockeaddr pour pouvoir se connecter a un server
-getsockname : permet dobtenir des info via un socket, comme le port lie a celui ci ou l adresse ip
-getprotobyname : permet dobetenir des info d un protocol reseau via sont nom 
-fcntl: permet de changer propriete ou comportement des fd
+// oe pas sure de le faire en fait faire un makefile qui regroupe les .o dans un dossier obj

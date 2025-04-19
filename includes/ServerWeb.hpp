@@ -15,6 +15,7 @@
 #include <unistd.h>
 #define NOT_FOUND_404 "<html><body><h1>404 Not Found</h1><p>Page introuvable</p></body></html>"
 #define READ_BUFFER 4096
+#define BodyTooLarge "<html><head><meta charset=\"UTF-8\"><title>413 Payload Too Large</title></head><body><h1>413 - Payload Too Large</h1><p>Le corps de la requête dépasse la taille autorisée.</p></body></html>"
 const std::string intTostring(const int n);
 class ServerWeb
 {
@@ -54,7 +55,7 @@ class ServerWeb
         void DeleteMethod(std::string Line, const int Client);
         std::string GetPath(std::string line);
         std::string GetContentType(const std::string& path);
-        bool  IsRequestComplete(const std::string& request);
+        int  IsRequestComplete(const std::string& request);
         void PostMethod(std::string path, std::string body, const int Client);
         void CGIMethod(std::string path, const int Client);
 };

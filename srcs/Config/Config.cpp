@@ -12,6 +12,11 @@ std::string Config::GetIndex() const {return this->index;}
 
 const std::string Config::GetUploadPath() const {return this->UploadPath;}
 
+int Config::GetMaxBody() const {return this->MaxBody;}
+
+bool Config::IsBodyLimited() const {return this->BodyLimit;}
+
+
 
 
 Config::Config(int ac, char **av)
@@ -25,6 +30,8 @@ Config::Config(int ac, char **av)
     this->index = "index.html";
     this->Error404Path = "www/default/errors/404.html";
     this->UploadPath = "www/casino/uploads";
+    this->MaxBody = 0;
+    this->BodyLimit = 0;
     if (ac == 1)
     {
         std::ifstream default_conf("conf/default.conf");

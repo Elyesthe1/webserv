@@ -14,8 +14,12 @@ class Config
         const std::string &Get404() const;
         std::string GetIndex() const ;
         const std::string GetUploadPath() const ;
+        int GetMaxBody() const;
+        bool IsBodyLimited ()const ;
 
     private:
+        bool BodyLimit;
+        int MaxBody;
         std::string UploadPath;
         std::string index;
         std::string Error404Path;

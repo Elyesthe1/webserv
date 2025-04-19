@@ -55,6 +55,7 @@ std::string ServerWeb::BuildHttpHeader(const int StatusCode, const std::string& 
         case 200: Status = "OK"; break;
         case 404: Status = "Not Found"; break;
 		case 204: Status = "No Content"; break;
+		case 413: Status = "Payload Too Large"; break;
 		case 403: Status = "Forbidden"; break;
 		case 400: Status = "Bad Request"; break;
 		case 500: Status = "Internal Server Error"; break;
@@ -237,28 +238,32 @@ void ServerWeb::RequestParsing(std::string Request, const int Client)
 	}
 }
 
-bool ServerWeb::IsRequestComplete(const std::string& request)
+int ServerWeb::IsRequestComplete(const std::string& request)
 {
 	std::size_t pos = request.find("\r\n\r\n");
 	if (pos == std::string::npos)
-		return false;
+		return 0;
 	std::size_t contentLenPos = request.find("Content-Length:");
 	if (contentLenPos != std::string::npos)
 	{
 		int length = std::atoi(request.c_str() + contentLenPos + 15);
+		if (this->config.IsBodyLimited())
+			if (length > this->config.GetMaxBody())
+				return -1;
 		std::size_t bodyStart = request.find("\r\n\r\n") + 4;
 		if (request.size() >= bodyStart + length)
-			return true;
+			return 1;
 		else
-			return false;
+			return 0;
 	}
-	return true;
+	return 1;
 }
 
 int ServerWeb::RecvLoop(const int Client)
 {
 	ssize_t status;
 	char buffer[READ_BUFFER];
+	int RequestReady;
 	while ((status = recv(Client, buffer, sizeof(buffer), 0)) > 0)
 		this->Vec_Client[Client].append(buffer, status);
 	if (status == 0)
@@ -267,9 +272,14 @@ int ServerWeb::RecvLoop(const int Client)
 		this->Vec_Client[Client].clear();
 		return 0;
 	}
-	else if (status == -1 && this->IsRequestComplete(this->Vec_Client[Client]))
+	else if (status == -1)
 	{
-		this->RequestParsing(this->Vec_Client[Client], Client);
+		if (!(RequestReady = this->IsRequestComplete(this->Vec_Client[Client])))
+			return 1;
+		else if (RequestReady == -1)
+			this->Send(Client, 413, "text/html", BodyTooLarge);
+		else
+			this->RequestParsing(this->Vec_Client[Client], Client);
 		this->Vec_Client[Client].clear();
 		return 0;
 	}
