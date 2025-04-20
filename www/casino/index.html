@@ -1,31 +1,71 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Webserv Test Site 🎰</title>
+  <title>Webserv Test Site 🌰</title>
   <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
-  <h1>🚀 Welcome to Webserv!</h1>
   <script>
-    document.cookie = "visited=true";
-    if (!document.cookie.includes("visited")) {
-      alert("Bienvenue nouveau visiteur ! 🎉");
+    let audio;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      // Vérifie si un sessionId existe déjà
+      let sessionId = getCookie("sessionId");
+      const isNewSession = !sessionId;
+
+      if (isNewSession) {
+        sessionId = generateSessionId();
+        document.cookie = "sessionId=" + sessionId + "; path=/;";
+        document.cookie = "visitCount=1; path=/;";
+      } else {
+        let visitCount = parseInt(getCookie("visitCount") || "0") + 1;
+        document.cookie = "visitCount=" + visitCount + "; path=/;";
+      }
+
+      // Affichage
+      document.getElementById("visit-count").textContent = getCookie("visitCount") || 1;
+
+      // Audio
+      audio = new Audio("/audio/bienvenue.m4a");
+      if (isNewSession) {
+        audio.play().catch(() => {
+          console.log("Autoplay bloqué. Utilise le bouton.");
+        });
+      }
+
+      document.getElementById("play-audio").addEventListener("click", () => {
+        audio.play();
+      });
+    });
+
+    function getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(';').shift();
+      return null;
+    }
+
+    function generateSessionId() {
+      return Math.random().toString(36).substring(2, 12) + Date.now().toString(36);
     }
   </script>
-  <nav>
-    <ul>
-      <li><a href="/about.html">About</a></li>
-      <li><a href="/upload.html">Test file upload</a></li>
-      <li><a href="/delete_me.html">Test DELETE method</a></li>
-      <li><a href="/doesnotexist">Trigger 404</a></li>
-      <li><a href="/form-handler.py">Python CGI</a></li>
-      <li><a href="/form-get.html">GET Form CGI</a></li>
-      <li><a href="/form-post.html">POST Form CGI</a></li>
-      <li><a href="/form-handler.php">PHP CGI</a></li>
-      <li><a href="/slot.html">🎰 Slot Machine</a></li>
-      <li><a href="/blackjack.html">🃏 Jouer au Blackjack</a></li>
-    </ul>
-  </nav>
+</head>
+<body>
+  <h1>🚀 Bienvenue sur Webserv!</h1>
+  <h2>Nombre de visites (session) : <span id="visit-count">0</span></h2>
+
+  <button id="play-audio">🔊 Activer le son</button>
+
+  <ul>
+    <li><a href="/about.html">About</a></li>
+    <li><a href="/upload.html">Test file upload</a></li>
+    <li><a href="/delete_me.html">Test DELETE method</a></li>
+    <li><a href="/doesnotexist">Trigger 404</a></li>
+    <li><a href="/form-handler.py">Run CGI (Python)</a></li>
+    <li><a href="/form-handler.php">Run CGI (PHP)</a></li>
+    <li><a href="/form-get.html">GET Form Test</a></li>
+    <li><a href="/form-post.html">POST Form Test</a></li>
+    <li><a href="/slot.html">🌰 Slot Machine</a></li>
+    <li><a href="/blackjack.html">🃏 Jouer au Blackjack</a></li>
+  </ul>
 </body>
 </html>

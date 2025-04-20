@@ -24,14 +24,14 @@ class ServerWeb
         void run();
         ~ServerWeb();
     private:
-        std::map<int, std::string> Vec_Client;
+        std::map<int, std::string>Vec_Client;
 	    struct epoll_event events[1024];
         int epoll;
         static int running;
         const Config config;
-
-
         Socket socket;
+
+
         int RecvLoop(const int Client);
         int Epoll_Wait();
         static void SignalHandler(int Sig);
@@ -51,11 +51,12 @@ class ServerWeb
         void EpollInit();
         void ReceiveData(const struct epoll_event &events);
         void RequestParsing(std::string Line, const int Client);
-        void GetMethod(std::string Line, const int Client);
+        void GetMethod(std::string Line, const int Client, std::string &Data);
         void DeleteMethod(std::string Line, const int Client);
         std::string GetPath(std::string line);
         std::string GetContentType(const std::string& path);
         int  IsRequestComplete(const std::string& request);
         void PostMethod(std::string path, std::string body, const int Client);
         void CGIMethod(std::string path, const int Client);
+        bool CookieHandler(std::string &Data);
 };

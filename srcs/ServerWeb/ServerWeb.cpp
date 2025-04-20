@@ -88,31 +88,33 @@ std::string ServerWeb::GetContentType(const std::string& path)
 {
     std::size_t dot = path.find_last_of(".");
     if (dot == std::string::npos)
-    	return "application/octet-stream"; // par default 
+    	return "application/octet-stream"; 
 
-    std::string ext = path.substr(dot + 1);
-    if (ext == "html" || ext == "htm")
+    std::string extention = path.substr(dot + 1);
+    if (extention == "html" || extention == "htm")
     	return "text/html";
-    else if (ext == "css")
+	else if (extention == "mp3" || extention == "m4a" )
+		return "audio/mpeg";
+    else if (extention == "css")
         return "text/css";
-    else if (ext == "js")
+    else if (extention == "js")
         return "application/javascript";
-    else if (ext == "png")
+    else if (extention == "png")
         return "image/png";
-    else if (ext == "jpg" || ext == "jpeg")
+    else if (extention == "jpg" || extention == "jpeg")
         return "image/jpeg";
-    else if (ext == "gif")
+    else if (extention == "gif")
         return "image/gif";
-    else if (ext == "ico")
+    else if (extention == "ico")
         return "image/x-icon";
-    else if (ext == "txt")
+    else if (extention == "txt")
         return "text/plain";
-    else if (ext == "json")
+    else if (extention == "json")
         return "application/json";
-    else if (ext == "pdf")
+    else if (extention == "pdf")
         return "application/pdf";
     else
-        return "application/octet-stream"; // par default si je coco pas 
+        return "application/octet-stream";
 }
 
 std::string ServerWeb::BuildHttpResponse(int statusCode, const std::string& contentType, const std::string& body)
@@ -142,17 +144,34 @@ void ServerWeb::DisconnectClient(const struct epoll_event &events)
 	if (epoll_ctl(this->epoll, EPOLL_CTL_DEL, events.data.fd,this->events) == -1) // pas obligele kernel le fait a ta place
 		Logger::WarningLog("epoll_ctl", "Remove client to epoll failed" + std::string(strerror(errno)));
 	close(events.data.fd);
-	this->Vec_Client.erase(events.data.fd);
 	Logger::InfoLog("Client", "Client disconnected gracefully (fd: " + intTostring(events.data.fd) + ")");
 }
 
-void ServerWeb::GetMethod(std::string path, const int Client)
+bool ServerWeb::CookieHandler(std::string &Data)
+{
+	int static visited = 0;
+	std::size_t PosCookie = Data.find("visitCount=");
+	if (PosCookie != std::string::npos && std::atoi(Data.substr(PosCookie + 11).c_str()) == 9 && !visited)
+	{
+		visited++;
+		return true;
+	}
+	return false;
+}
+
+
+void ServerWeb::GetMethod(std::string path, const int Client, std::string &Data)
 {
 	int statuscode = 200;
 	std::string body;
 	std::string CompletePath;
 	if (!path[1])
-		CompletePath = this->config.GetRoot() + "/" + this->config.GetIndex();
+	{
+		if (this->CookieHandler(Data))
+			CompletePath = this->config.GetRoot() + "/" + "10th_visit.html";
+		else
+			CompletePath = this->config.GetRoot() + "/" + this->config.GetIndex();
+	}
 	else
 		CompletePath = this->config.GetRoot() + path;
 	body = this->BuildBody(CompletePath, statuscode);
@@ -219,13 +238,13 @@ void ServerWeb::CGIMethod(std::string Data, const int Client)
 
 void ServerWeb::RequestParsing(std::string Request, const int Client)
 {
-	std::cout << Request << std::endl;
+	// std::cout << Request << std::endl;
 	if (!std::strncmp(Request.c_str(), "GET", 3))
 	{
 		if(Request.find(".py") != std::string::npos || Request.find(".php") != std::string::npos)
 			this->CGIMethod(Request, Client);
 		else
-			this->GetMethod(this->GetPath(&Request[4]), Client);
+			this->GetMethod(this->GetPath(&Request[4]), Client, Request);
 	}
 	else if (!std::strncmp(Request.c_str(), "DELETE", 6))
 		this->DeleteMethod(this->config.GetRoot() + this->GetPath(&Request[7]), Client);
@@ -265,7 +284,7 @@ int ServerWeb::RecvLoop(const int Client)
 	char buffer[READ_BUFFER];
 	int RequestReady;
 	while ((status = recv(Client, buffer, sizeof(buffer), 0)) > 0)
-		this->Vec_Client[Client].append(buffer, status);
+		this->Vec_Client[Client].append(buffer, status);	
 	if (status == 0)
 	{
 		this->RequestParsing(this->Vec_Client[Client], Client);

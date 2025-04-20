@@ -22,13 +22,12 @@ class Socket
         int AcceptClient();
         int GetFd() const ;
     private:
-        const std::string GetIp(const in_addr &addrr);
         void CloseSocket();
         void InitSocket(const Config &config);
-        void Listen(const Config &config) const ;
+        void Listen() const ;
         void BindSocket(const Config &config) const ;
-        void SetSocketOp(const Config &config) const;
-        void CreateSocket(const Config &config);
+        void SetSocketOp() const;
+        void CreateSocket();
         void SetNonBlocking(int fd);
         int socketFD;
 };

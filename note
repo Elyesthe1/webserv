@@ -1,6 +1,7 @@
+parsing le faire en mode dico: key=value
 Faire les CGI GET + POST py et php
 faire que le serv reponde a selon le bon host designe
-
+cookie 
 tout ca pas fait :
 Setup des routes avec une ou plusieurs des règles/configurations suivantes (les
     routes n’utiliseront pas de regexp) :
