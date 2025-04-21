@@ -20,7 +20,7 @@ const std::string intTostring(const int n);
 class ServerWeb
 {
     public:
-        ServerWeb(int ac , char **av);
+        ServerWeb(Config conf);
         void run();
         ~ServerWeb();
     private:
@@ -28,7 +28,7 @@ class ServerWeb
 	    struct epoll_event events[1024];
         int epoll;
         static int running;
-        Config *config;
+        Config config;
         Socket *socket;
 
 

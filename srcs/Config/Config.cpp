@@ -14,24 +14,58 @@ const std::string Config::GetUploadPath() const {return this->UploadPath;}
 
 int Config::GetMaxBody() const {return this->MaxBody;}
 
-bool Config::IsBodyLimited() const {return this->BodyLimit;}
+bool Config::IsBodyLimited() const {return this->is_body_limited;}
+Config Config::GetConfig(int i) const {return this->Vec_Conf[i];}
+int Config::size() const {return this->How_Much_Server;}
 
+Config::Config() {}
+
+void Config::SetSocketAddrr(const int port)
+{
+    this->address.sin_family = AF_INET;
+    this->address.sin_addr.s_addr = INADDR_ANY;
+    this->address.sin_port = htons(8080);
+    this->ports = 8080;
+}
+
+void Config::SetRoot(const std::string Root)
+{
+    this->root = Root;
+}
+
+void Config::SetIndex(const std::string Index)
+{
+    this->index = Index;
+}
+
+void   Config::Set404(const std::string path)
+{
+    this->Error404Path = path;
+}
+void Config::SetUpload(const std::string path)
+{
+    this->UploadPath = path;
+}
+void Config::SetBodyLimit(const int limit, bool islimited)
+{
+    this->MaxBody = 0;
+    this->is_body_limited = 0;
+}
 
 
 
 Config::Config(int ac, char **av)
 {
     // setup juste pour test
-    this->address.sin_family = AF_INET;
-    this->address.sin_addr.s_addr = INADDR_ANY;
-    this->address.sin_port = htons(8080);
-    this->ports = 8080;
-    this->root = "www/casino";
-    this->index = "index.html";
-    this->Error404Path = "www/default/errors/404.html";
-    this->UploadPath = "www/casino/uploads";
-    this->MaxBody = 0;
-    this->BodyLimit = 0;
+    Config conf;
+    conf.SetSocketAddrr(8080);
+    conf.SetRoot("www/casino");
+    conf.SetIndex("index.html");
+    conf.Set404("www/default/errors/404.html");
+    conf.SetUpload("www/casino/uploads");
+    conf.SetBodyLimit(0, 0);
+    this->How_Much_Server = 1;
+    this->Vec_Conf.push_back(conf);
     if (ac == 1)
     {
         std::ifstream default_conf("conf/default.conf");

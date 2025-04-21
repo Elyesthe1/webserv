@@ -2,11 +2,10 @@
 
 int ServerWeb::running = 1;
 
-ServerWeb::ServerWeb(int ac, char **av) : config(NULL), socket(NULL)
+ServerWeb::ServerWeb(Config conf) : config(conf), socket(NULL)
 {
 	try
 	{
-		this->config = new Config(ac, av);
 		this->socket = new Socket(this->config);
 	}
 	catch (std::exception &e)
@@ -25,7 +24,6 @@ ServerWeb::~ServerWeb()
 
 void ServerWeb::DeleteDynamiqueAllocation()
 {
-	delete this->config;
 	delete this->socket;
 }
 
@@ -57,7 +55,7 @@ int ServerWeb::Epoll_Wait()
 
 std::string ServerWeb::Send404Page() 
 {
-	std::ifstream file(this->config->Get404().c_str());
+	std::ifstream file(this->config.Get404().c_str());
 	if (!file)
 		return NOT_FOUND_404;
 	std::stringstream buffer;
@@ -187,12 +185,12 @@ void ServerWeb::GetMethod(std::string path, const int Client, std::string &Data)
 	if (!path[1])
 	{
 		if (this->CookieHandler(Data))
-			CompletePath = this->config->GetRoot() + "/" + "10th_visit.html";
+			CompletePath = this->config.GetRoot() + "/" + "10th_visit.html";
 		else
-			CompletePath = this->config->GetRoot() + "/" + this->config->GetIndex();
+			CompletePath = this->config.GetRoot() + "/" + this->config.GetIndex();
 	}
 	else
-		CompletePath = this->config->GetRoot() + path;
+		CompletePath = this->config.GetRoot() + path;
 	body = this->BuildBody(CompletePath, statuscode);
 	this->Send(Client, statuscode,this->GetContentType(CompletePath), body);
 }
@@ -266,13 +264,13 @@ void ServerWeb::RequestParsing(std::string Request, const int Client)
 			this->GetMethod(this->GetPath(&Request[4]), Client, Request);
 	}
 	else if (!std::strncmp(Request.c_str(), "DELETE", 6))
-		this->DeleteMethod(this->config->GetRoot() + this->GetPath(&Request[7]), Client);
+		this->DeleteMethod(this->config.GetRoot() + this->GetPath(&Request[7]), Client);
 	else if (!std::strncmp(Request.c_str(), "POST", 4))
 	{
 		if(Request.find(".py") != std::string::npos || Request.find(".php") != std::string::npos)
 			this->CGIMethod(Request, Client);
 		else
-			this->PostMethod(this->config->GetUploadPath(), Request, Client);
+			this->PostMethod(this->config.GetUploadPath(), Request, Client);
 	}
 }
 
@@ -285,8 +283,8 @@ int ServerWeb::IsRequestComplete(const std::string& request)
 	if (contentLenPos != std::string::npos)
 	{
 		int length = std::atoi(request.c_str() + contentLenPos + 15);
-		if (this->config->IsBodyLimited())
-			if (length > this->config->GetMaxBody())
+		if (this->config.IsBodyLimited())
+			if (length > this->config.GetMaxBody())
 				return -1;
 		std::size_t bodyStart = request.find("\r\n\r\n") + 4;
 		if (request.size() >= bodyStart + length)
@@ -366,7 +364,7 @@ void ServerWeb::MainLoop()
 void ServerWeb::launch()
 {
 	this->EpollInit();
-	Logger::InfoLog("Server", "Server started successfully! Listening on port " + intTostring(this->config->GetPorts()));
+	Logger::InfoLog("Server", "Server started successfully! Listening on port " + intTostring(this->config.GetPorts()));
 	this->MainLoop();
 }
 
