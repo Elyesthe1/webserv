@@ -1,17 +1,14 @@
-parsing le faire en mode dico: key=value
-Faire les CGI GET + POST py et php
-faire que le serv reponde a selon le bon host designe
-cookie 
-tout ca pas fait :
+parsing le faire en mode dico: key=value ❌ // si une erreur on lance rien nique 
+Faire les CGI GET + POST py et php ❌
+faire que le serv reponde a selon le bon host designe ❌
+cookie ✅ 
+multiserver ❌ idee: config remplis un int de cb de server a faire, avoir un pointeur de server dans server, aloue autant de server de commbien jai besoin et dans run lance tout les serv 
 Setup des routes avec une ou plusieurs des règles/configurations suivantes (les
     routes n’utiliseront pas de regexp) :
-    ◦ Définir une liste de méthodes HTTP acceptées pour la route.
-    ◦ Définir une redirection HTTP.
-    ◦ Définir un répertoire ou un fichier à partir duquel le fichier doit être recherché
-    (par exemple si l’url /kapouet est rootée sur /tmp/www, l’url /kapouet/pouic/toto/pouet
-    est /tmp/www/pouic/toto/pouet).
-    ◦ Activer ou désactiver le listing des répertoires.
-    ◦ Rendre la route capable d’accepter les fichiers téléversés et configurer où cela
+    ◦ Définir une liste de méthodes HTTP acceptées pour la route. ❌
+    ◦ Définir une redirection HTTP. ❌
+    ◦ Activer ou désactiver le listing des répertoires. ❌
+    ◦ Rendre la route capable d’accepter les fichiers téléversés et configurer où cela ❌
     doit être enregistré.
 
 // FAIRE ATTENDION DE PAS AVOIR UN THROW POUR UNE WARNING QUI FAIT QUITTER LE PROGRAM

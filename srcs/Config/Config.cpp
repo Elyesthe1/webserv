@@ -38,7 +38,6 @@ Config::Config(int ac, char **av)
         if (!default_conf)
         {
             std::cerr << "Erreur : Aucun fichier de configuration trouvé." << std::endl;
-            exit(EXIT_FAILURE);
         }
     }
 }

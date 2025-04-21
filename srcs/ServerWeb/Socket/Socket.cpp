@@ -2,17 +2,9 @@
 
 int Socket::GetFd() const {return this->socketFD;}
 
-Socket::Socket(const Config &config)
+Socket::Socket(const Config *config)
 {
-    try
-    {
-        this->InitSocket(config);
-    }
-    catch(const std::exception& e)
-    {
-        Logger::ErrorLog("Socket", std::string(e.what()) + strerror(errno));
-        exit(EXIT_FAILURE);
-    }
+    this->InitSocket(config);
 }
 
 int Socket::AcceptClient()
@@ -31,7 +23,7 @@ int Socket::AcceptClient()
     return newFd;
 }
 
-void Socket::InitSocket(const Config &config) 
+void Socket::InitSocket(const Config *config) 
 {
     this->CreateSocket();
     this->SetNonBlocking(this->socketFD);
@@ -61,9 +53,9 @@ void Socket::Listen() const
         throw std::runtime_error("Failed to Listen the socket: ");
 }
 
-void Socket::BindSocket(const Config &config) const
+void Socket::BindSocket(const Config *config) const
 {
-    if (bind(this->socketFD, (struct sockaddr*)&config.Getaddr(), sizeof(config.Getaddr())) == - 1)
+    if (bind(this->socketFD, (struct sockaddr*)&config->Getaddr(), sizeof(config->Getaddr())) == - 1)
         throw std::runtime_error("Failed to bind the socket: ");
 }
 void Socket::CreateSocket()

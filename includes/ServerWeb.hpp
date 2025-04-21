@@ -28,8 +28,8 @@ class ServerWeb
 	    struct epoll_event events[1024];
         int epoll;
         static int running;
-        const Config config;
-        Socket socket;
+        Config *config;
+        Socket *socket;
 
 
         int RecvLoop(const int Client);
@@ -59,4 +59,5 @@ class ServerWeb
         void PostMethod(std::string path, std::string body, const int Client);
         void CGIMethod(std::string path, const int Client);
         bool CookieHandler(std::string &Data);
+        void DeleteDynamiqueAllocation();
 };
