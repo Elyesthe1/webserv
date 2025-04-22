@@ -7,6 +7,7 @@ int main(int ac, char **av)
     {
         Config conf(ac, av);
         ServManager manager(conf);
+        manager.run();
     }
     catch (const std::exception &e)
     {

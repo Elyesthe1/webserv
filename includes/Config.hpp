@@ -22,6 +22,9 @@ class Config
         bool IsBodyLimited ()const ;
         Config GetConfig(const int i) const;
         int size() const ;
+        std::string GetHost() const;
+        
+    private:
         void SetSocketAddrr(const int port);
         void SetRoot(const std::string root);
         void SetIndex(const std::string Index);
@@ -29,9 +32,7 @@ class Config
         void SetUpload(const std::string path);
         void SetBodyLimit(const int limit, bool islimited);
         void SetHost(const std::string host);
-        std::string GetHost() const;
-
-    private:
+    
         std::string host;
         int How_Much_Server;
         std::vector<Config> Vec_Conf;

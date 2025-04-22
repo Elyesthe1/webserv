@@ -24,13 +24,15 @@ class ServerWeb
         void run();
         Config config;
         Socket socket;
+        void RequestParsing(std::string Request, const int Client);
+    private:
+        std::string GetPath(std::string Line);
         void PostMethod(std::string path, std::string body, const int Client);
         void CGIMethod(std::string path, const int Client);
         void GetMethod(std::string Line, const int Client, std::string &Data);
         void DeleteMethod(std::string Line, const int Client);
         bool CheckBodyLimit(std::string Data);
         void Send(int clientFd, int statusCode, const std::string& contentType, const std::string& body);
-    private:
         std::string BuildHttpResponse(int statusCode, const std::string& contentType, const std::string& body);
         std::string BuildHttpHeader(const int StatusCode, const std::string& ContentType, const size_t ContentLen);
         std::string Send404Page();
