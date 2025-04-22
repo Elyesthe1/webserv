@@ -1,13 +1,16 @@
 #include "../includes/Config.hpp"
-#include "../includes/ServerWeb.hpp"
-
+#include "../includes/ServManager.hpp"
+#include "../includes/Logger.hpp"
 int main(int ac, char **av)
 {
-    Config conf(ac, av);
-    for(int i = 0; i < conf.size(); i++)
+    try
     {
-        ServerWeb serv(conf.GetConfig(i));
-        serv.run();
+        Config conf(ac, av);
+        ServManager manager(conf);
+    }
+    catch (const std::exception &e)
+    {
+        Logger::ErrorLog("Main", "Une erreur critique est survenue : " + std::string(e.what()));
     }
     return 0;
 }

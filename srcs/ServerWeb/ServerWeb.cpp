@@ -1,57 +1,6 @@
 #include "../../includes/ServerWeb.hpp"
 
-int ServerWeb::running = 1;
-
-ServerWeb::ServerWeb(Config conf) : config(conf), socket(NULL)
-{
-	try
-	{
-		this->socket = new Socket(this->config);
-	}
-	catch (std::exception &e)
-	{
-        Logger::ErrorLog("ServerWeb", "Initialisation du serveur a échoué : " + std::string(e.what()));
-		ServerWeb::running = 0;
-	}
-}
-
-ServerWeb::~ServerWeb()
-{
-    this->CloseEpoll();
-	this->ManageSignals(false);	
-	this->DeleteDynamiqueAllocation();
-}
-
-void ServerWeb::DeleteDynamiqueAllocation()
-{
-	delete this->socket;
-}
-
-void ServerWeb::CloseEpoll()
-{
-	if(this->epoll != -1)
-		close(this->epoll);
-}
-
-
-void ServerWeb::EpollInit()
-{
-	if ((this->epoll = epoll_create(MAX_CLIENT)) == -1)
-		throw std::runtime_error("Cannot create epoll: ");
-	struct epoll_event events;
-	events.events = EPOLLIN ;
-	events.data.fd = this->socket->GetFd();
-	if (epoll_ctl(this->epoll, EPOLL_CTL_ADD, this->socket->GetFd(), &events) == -1)
-    	throw std::runtime_error("Cannot add listening socket to epoll: ");
-}
-
-int ServerWeb::Epoll_Wait()
-{
-	int fd = epoll_wait(this->epoll, this->events, MAX_CLIENT, -1);
-	if (fd == -1)
-    	throw std::runtime_error("epoll_wait failed: " + std::string(strerror(errno)));
-	return fd;
-}
+ServerWeb::ServerWeb(Config conf) : config(conf), socket(conf) {}
 
 std::string ServerWeb::Send404Page() 
 {
@@ -148,7 +97,7 @@ void ServerWeb::Send(int clientFd, int statusCode, const std::string& contentTyp
 
 void ServerWeb::NewClient()
 {
-	int NewClient = this->socket->AcceptClient();
+	int NewClient = this->socket.AcceptClient();
 	struct epoll_event eve;
 	eve.events = EPOLLIN ;
  	eve.data.fd = NewClient;
@@ -327,76 +276,3 @@ void ServerWeb::ReceiveData(const struct epoll_event &events)
 	if (this->RecvLoop(events.data.fd) == 0)
 		this->DisconnectClient(events);
 }
-
-void ServerWeb::ClientHandler(const struct epoll_event &events)
-{
-	try
-	{
-		if (events.data.fd == this->socket->GetFd())
-			this->NewClient();
-		else
-			this->ReceiveData(events);
-	}
-	catch (const std::exception &e)
-	{
-		Logger::WarningLog("ClientHandler", "Problem to handle client due to: " + std::string(e.what()));
-	}
-
-}
-
-
-void ServerWeb::FdLoop(const int ReadyFD)
-{
-	for(int i = 0; i < ReadyFD; i++)
-			this->ClientHandler(this->events[i]);
-}
-
-
-void ServerWeb::MainLoop()
-{
-	while(ServerWeb::running)
-	{
-		int readyFD = this->Epoll_Wait();
-		FdLoop(readyFD);
-	}
-}
-
-void ServerWeb::launch()
-{
-	this->EpollInit();
-	Logger::InfoLog("Server", "Server started successfully! Listening on port " + intTostring(this->config.GetPorts()));
-	this->MainLoop();
-}
-
-void ServerWeb::SignalHandler(int Sig)
-{
-	if (Sig == SIGINT)
-	{
-		Logger::InfoLog("SIGINT", "Serveur interrompu par SIGINT (Ctrl+C). Fermeture propre...");
-		ServerWeb::running = 0;
-	}
-}
-
-void ServerWeb::ManageSignals(bool flag)
-{
-	if (flag)
-		signal(SIGINT, ServerWeb::SignalHandler);
-	else
-		signal(SIGINT, SIG_DFL);
-}
-
-
-void ServerWeb::run() 
-{
-	this->ManageSignals(true);	
-	try
-	{
-		this->launch();
-	}
-	catch(const std::exception& e)
-	{
-		if (ServerWeb::running)
-			Logger::ErrorLog("Server", "A critical error occurred. The server will shut down. Reason: " + std::string(e.what()));
-	}
-}
-

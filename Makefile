@@ -10,6 +10,7 @@ SRCS = srcs/main.cpp \
 	   srcs/ServerWeb/Socket/Socket.cpp \
 	   srcs/Logger/Logger.cpp \
 	   srcs/utils/utils.cpp \
+	   srcs/ServManager/ServManager.cpp \
 
 OBJS = $(SRCS:.cpp=.o)
 

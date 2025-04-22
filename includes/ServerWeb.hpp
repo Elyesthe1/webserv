@@ -25,17 +25,12 @@ class ServerWeb
         ~ServerWeb();
     private:
         std::map<int, std::string>Vec_Client;
-	    struct epoll_event events[1024];
-        int epoll;
-        static int running;
         Config config;
-        Socket *socket;
+        Socket socket;
 
 
         int RecvLoop(const int Client);
         int Epoll_Wait();
-        static void SignalHandler(int Sig);
-        void ManageSignals(bool flag);
         std::string BuildHttpResponse(int statusCode, const std::string& contentType, const std::string& body);
         std::string BuildHttpHeader(const int StatusCode, const std::string& ContentType, const size_t ContentLen);
         std::string Send404Page();
@@ -46,7 +41,6 @@ class ServerWeb
         void NewClient();
 		void FdLoop(const int readyFD);
         void MainLoop();
-        void launch();
         void CloseEpoll();
         void EpollInit();
         void ReceiveData(const struct epoll_event &events);
@@ -59,5 +53,4 @@ class ServerWeb
         void PostMethod(std::string path, std::string body, const int Client);
         void CGIMethod(std::string path, const int Client);
         bool CookieHandler(std::string &Data);
-        void DeleteDynamiqueAllocation();
 };

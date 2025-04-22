@@ -19,6 +19,7 @@ Config Config::GetConfig(int i) const {return this->Vec_Conf[i];}
 int Config::size() const {return this->How_Much_Server;}
 
 Config::Config() {}
+std::string Config::GetHost() const {retunr this->host;}
 
 void Config::SetSocketAddrr(const int port)
 {
@@ -52,6 +53,11 @@ void Config::SetBodyLimit(const int limit, bool islimited)
     this->is_body_limited = 0;
 }
 
+void Config::SetHost(const std::strin Host)
+{
+    this->host = host
+}
+
 
 
 Config::Config(int ac, char **av)
@@ -64,6 +70,7 @@ Config::Config(int ac, char **av)
     conf.Set404("www/default/errors/404.html");
     conf.SetUpload("www/casino/uploads");
     conf.SetBodyLimit(0, 0);
+    conf.SetHost("www.example.com");
     this->How_Much_Server = 1;
     this->Vec_Conf.push_back(conf);
     if (ac == 1)

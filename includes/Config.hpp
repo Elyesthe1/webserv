@@ -26,8 +26,11 @@ class Config
         void Set404(const std::string path);
         void SetUpload(const std::string path);
         void SetBodyLimit(const int limit, bool islimited);
+        void SetHost(const std::strin host);
+        std::string GetHost() const;
 
     private:
+        std::string host;
         int How_Much_Server;
         std::vector<Config> Vec_Conf;
         bool is_body_limited;
