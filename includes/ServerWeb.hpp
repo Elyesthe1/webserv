@@ -20,44 +20,22 @@ const std::string intTostring(const int n);
 class ServerWeb
 {
     public:
-        ServerWeb(int ac , char **av);
+        ServerWeb(Config conf);
         void run();
-        ~ServerWeb();
+        Config config;
+        Socket socket;
+        void PostMethod(std::string path, std::string body, const int Client);
+        void CGIMethod(std::string path, const int Client);
+        void GetMethod(std::string Line, const int Client, std::string &Data);
+        void DeleteMethod(std::string Line, const int Client);
+        bool CheckBodyLimit(std::string Data);
+        void Send(int clientFd, int statusCode, const std::string& contentType, const std::string& body);
     private:
-        std::map<int, std::string>Vec_Client;
-	    struct epoll_event events[1024];
-        int epoll;
-        static int running;
-        Config *config;
-        Socket *socket;
-
-
-        int RecvLoop(const int Client);
-        int Epoll_Wait();
-        static void SignalHandler(int Sig);
-        void ManageSignals(bool flag);
         std::string BuildHttpResponse(int statusCode, const std::string& contentType, const std::string& body);
         std::string BuildHttpHeader(const int StatusCode, const std::string& ContentType, const size_t ContentLen);
         std::string Send404Page();
         std::string BuildBody(std::string &FilePath, int &StatusCode);
-        void Send(int clientFd, int statusCode, const std::string& contentType, const std::string& body);
-        void ClientHandler( const struct epoll_event &events);
-        void DisconnectClient(const struct epoll_event &events);
-        void NewClient();
-		void FdLoop(const int readyFD);
-        void MainLoop();
-        void launch();
-        void CloseEpoll();
-        void EpollInit();
-        void ReceiveData(const struct epoll_event &events);
-        void RequestParsing(std::string Line, const int Client);
-        void GetMethod(std::string Line, const int Client, std::string &Data);
-        void DeleteMethod(std::string Line, const int Client);
-        std::string GetPath(std::string line);
         std::string GetContentType(const std::string& path);
         int  IsRequestComplete(const std::string& request);
-        void PostMethod(std::string path, std::string body, const int Client);
-        void CGIMethod(std::string path, const int Client);
         bool CookieHandler(std::string &Data);
-        void DeleteDynamiqueAllocation();
 };

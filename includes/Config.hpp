@@ -4,10 +4,14 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <cstdlib>
+#include <vector>
+const std::string intTostring(const int n);
+
 class Config
 {
     public:
         Config(int ac, char **av);
+        Config();
         const struct sockaddr_in& Getaddr() const ;
         int GetPorts() const;
         std::string GetRoot() const;
@@ -16,9 +20,22 @@ class Config
         const std::string GetUploadPath() const ;
         int GetMaxBody() const;
         bool IsBodyLimited ()const ;
+        Config GetConfig(const int i) const;
+        int size() const ;
+        void SetSocketAddrr(const int port);
+        void SetRoot(const std::string root);
+        void SetIndex(const std::string Index);
+        void Set404(const std::string path);
+        void SetUpload(const std::string path);
+        void SetBodyLimit(const int limit, bool islimited);
+        void SetHost(const std::string host);
+        std::string GetHost() const;
 
     private:
-        bool BodyLimit;
+        std::string host;
+        int How_Much_Server;
+        std::vector<Config> Vec_Conf;
+        bool is_body_limited;
         int MaxBody;
         std::string UploadPath;
         std::string index;

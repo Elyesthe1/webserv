@@ -13,21 +13,21 @@
 #include "Logger.hpp"
 #define MAX_CLIENT 1024
 const std::string intTostring(const int n);
+void SetNonBlocking(const int fd);
 
 class Socket
 {
     public:
-        Socket(const Config *config);
+        Socket(const Config &config);
         ~Socket();
         int AcceptClient();
         int GetFd() const ;
     private:
         void CloseSocket();
-        void InitSocket(const Config *config);
+        void InitSocket(const Config &config);
         void Listen() const ;
-        void BindSocket(const Config *config) const ;
+        void BindSocket(const Config &config) const ;
         void SetSocketOp() const;
         void CreateSocket();
-        void SetNonBlocking(int fd);
         int socketFD;
 };

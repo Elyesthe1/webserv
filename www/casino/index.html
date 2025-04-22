@@ -8,21 +8,24 @@
     let audio;
 
     document.addEventListener("DOMContentLoaded", () => {
-      // Vérifie si un sessionId existe déjà
       let sessionId = getCookie("sessionId");
+      let visitCount;
+
       const isNewSession = !sessionId;
 
       if (isNewSession) {
         sessionId = generateSessionId();
+        visitCount = 1;
         document.cookie = "sessionId=" + sessionId + "; path=/;";
-        document.cookie = "visitCount=1; path=/;";
       } else {
-        let visitCount = parseInt(getCookie("visitCount") || "0") + 1;
-        document.cookie = "visitCount=" + visitCount + "; path=/;";
+        visitCount = parseInt(getCookie("visitCount") || "0") + 1;
       }
 
-      // Affichage
-      document.getElementById("visit-count").textContent = getCookie("visitCount") || 1;
+      // Toujours mettre à jour le cookie après calcul
+      document.cookie = "visitCount=" + visitCount + "; path=/;";
+
+      // Mise à jour DOM avec la valeur calculée, pas re-lue
+      document.getElementById("visit-count").textContent = visitCount;
 
       // Audio
       audio = new Audio("/audio/bienvenue.m4a");
