@@ -19,7 +19,7 @@ Config Config::GetConfig(int i) const {return this->Vec_Conf[i];}
 int Config::size() const {return this->How_Much_Server;}
 
 Config::Config() {}
-std::string Config::GetHost() const {retunr this->host;}
+std::string Config::GetHost() const {return this->host;}
 
 void Config::SetSocketAddrr(const int port)
 {
@@ -49,13 +49,13 @@ void Config::SetUpload(const std::string path)
 }
 void Config::SetBodyLimit(const int limit, bool islimited)
 {
-    this->MaxBody = 0;
-    this->is_body_limited = 0;
+    this->MaxBody = limit;
+    this->is_body_limited = islimited;
 }
 
-void Config::SetHost(const std::strin Host)
+void Config::SetHost(const std::string Host)
 {
-    this->host = host
+    this->host = Host;
 }
 
 
@@ -63,22 +63,39 @@ void Config::SetHost(const std::strin Host)
 Config::Config(int ac, char **av)
 {
     // setup juste pour test
-    Config conf;
-    conf.SetSocketAddrr(8080);
-    conf.SetRoot("www/casino");
-    conf.SetIndex("index.html");
-    conf.Set404("www/default/errors/404.html");
-    conf.SetUpload("www/casino/uploads");
-    conf.SetBodyLimit(0, 0);
-    conf.SetHost("www.example.com");
-    this->How_Much_Server = 1;
-    this->Vec_Conf.push_back(conf);
-    if (ac == 1)
+    std::vector<std::string> root;
+    root.push_back("www/casino");
+    root.push_back("www/default");
+    std::vector<int> port;
+    port.push_back(8080);
+    port.push_back(8081);
+    std::vector<std::string> index;
+    index.push_back("index.html");
+    index.push_back("index.html");
+    std::vector<std::string> page404;
+    page404.push_back("www/default/errors/404.html");
+    page404.push_back("www/default/errors/404.ht");
+    std::vector<std::string> Upload;
+    Upload.push_back("www/casino/uploads");
+    Upload.push_back("www/default/uploads");
+    std::vector<std::pair<int,int> > Limit;
+    Limit.push_back(std::make_pair(0, 0));
+    Limit.push_back(std::make_pair(100, 1));
+    std::vector<std::string> host;
+    host.push_back("");
+    host.push_back("www.example.com");
+
+    for(int i = 0; i < 1; i++)
     {
-        std::ifstream default_conf("conf/default.conf");
-        if (!default_conf)
-        {
-            std::cerr << "Erreur : Aucun fichier de configuration trouvé." << std::endl;
-        }
+        Config conf;
+        conf.SetSocketAddrr(port[i]);
+        conf.SetRoot(root[i]);
+        conf.SetIndex(index[i]);
+        conf.Set404(page404[i]);
+        conf.SetUpload(Upload[i]);
+        conf.SetBodyLimit(Limit[i].first, Limit[i].second);
+        conf.SetHost(host[i]);
+        this->How_Much_Server = i + 1;
+        this->Vec_Conf.push_back(conf);
     }
 }

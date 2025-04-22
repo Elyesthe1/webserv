@@ -4,7 +4,8 @@
 parsing le faire en mode dico: key=value ❌ // si une erreur on lance rien nique 
 Faire les CGI GET + POST py et php ❌
 faire que le serv reponde a selon le bon host designe ❌
-cookie ✅ 
+cookie ✅ ❌
+MAX BODY A FAIRE 
 multiserver ❌ idee: config remplis un int de cb de server a faire, avoir un pointeur de server dans server, aloue autant de server de commbien jai besoin et dans run lance tout les serv // A FAIRE APRES PARSING
 Setup des routes avec une ou plusieurs des règles/configurations suivante // faire un objet conf a part fair un for dans le main ect...
     ◦ Définir une liste de méthodes HTTP acceptées pour la route. ❌

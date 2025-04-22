@@ -26,7 +26,7 @@ class Config
         void Set404(const std::string path);
         void SetUpload(const std::string path);
         void SetBodyLimit(const int limit, bool islimited);
-        void SetHost(const std::strin host);
+        void SetHost(const std::string host);
         std::string GetHost() const;
 
     private:
