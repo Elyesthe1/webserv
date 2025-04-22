@@ -25,8 +25,8 @@ void Config::SetSocketAddrr(const int port)
 {
     this->address.sin_family = AF_INET;
     this->address.sin_addr.s_addr = INADDR_ANY;
-    this->address.sin_port = htons(8080);
-    this->ports = 8080;
+    this->address.sin_port = htons(port);
+    this->ports = port;
 }
 
 void Config::SetRoot(const std::string Root) {this->root = Root;}
@@ -41,8 +41,7 @@ void Config::SetBodyLimit(const int limit, bool islimited)
     this->is_body_limited = islimited;
 }
 
-void Config::SetHost(const std::string Host) {this->host = Host + ":" + intTostring(this->ports);}
-
+void Config::SetHost(const std::string Host) {this->host = Host;}
 
 
 Config::Config(int ac, char **av)
@@ -70,7 +69,7 @@ Config::Config(int ac, char **av)
     host.push_back("");
     host.push_back("www.example.com");
 
-    for(int i = 0; i < 2; i++)
+    for(int i = 0; i < 1; i++)
     {
         Config conf;
         conf.SetSocketAddrr(port[i]);

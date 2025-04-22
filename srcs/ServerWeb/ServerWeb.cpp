@@ -2,6 +2,18 @@
 
 ServerWeb::ServerWeb(Config conf) : config(conf), socket(conf) {}
 
+bool ServerWeb::CheckBodyLimit(std::string Data)
+{
+	if (!this->config.IsBodyLimited())
+		return false;
+	std::size_t pos = Data.find("Content-Length:");
+	if (pos == std::string::npos)
+		return true;
+	if (std::atoi(Data.c_str() + pos + 15) > this->config.GetMaxBody())
+		return true;
+	return false;
+}
+
 std::string ServerWeb::Send404Page() 
 {
 	std::ifstream file(this->config.Get404().c_str());

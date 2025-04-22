@@ -43,8 +43,8 @@ ServManager::ServManager(const Config &conf) : conf(conf)
 int ServManager::Epoll_Wait()
 {
 	int fd = epoll_wait(this->epoll, this->events, MAX_CLIENT, -1);
-	if (fd == -1)
-    	throw std::runtime_error("epoll_wait failed: " + std::string(strerror(errno)));
+	if (fd == -1 && std::string(strerror(errno)) != "Interrupted system call" )
+    		throw std::runtime_error("epoll_wait failed: " + std::string(strerror(errno)));
 	return fd;
 }
 
@@ -194,20 +194,23 @@ int ServManager::IsRequestComplete(const std::string& request)
 ServerWeb *ServManager::ExtractHost(const std::string& request)
 {
 	std::size_t hostpos = request.find("Host:");
-	std::cout << hostpos << std::endl;
 	if (hostpos == std::string::npos)
 		return 	this->Map_Host_Server.begin()->second;
-	std::string host = request.substr(hostpos + 7);
+
+	std::size_t hostposend = request.find(":", hostpos+ 6);
+	if (hostposend == std::string::npos)
+		return 	this->Map_Host_Server.begin()->second;
+
+	std::string host = request.substr(hostpos + 6 , hostposend - (hostpos + 6));
 	if (this->Map_Host_Server.count(host))
 		return this->Map_Host_Server[host];
+
 	return this->Map_Host_Server.begin()->second;
 }
 
 
 void ServManager::RequestParsing(std::string Request, const int Client)
 {
-	std::cout << Request << std::endl;
-	std::cout << this->ExtractHost(Request) << std::endl;
 	ServerWeb *serv = this->ExtractHost(Request);
 	if (!std::strncmp(Request.c_str(), "GET", 3))
 	{
@@ -220,7 +223,9 @@ void ServManager::RequestParsing(std::string Request, const int Client)
 		serv->DeleteMethod(serv->config.GetRoot() + this->GetPath(&Request[7]), Client);
 	else if (!std::strncmp(Request.c_str(), "POST", 4))
 	{
-		if(Request.find(".py") != std::string::npos || Request.find(".php") != std::string::npos)
+		if (serv->CheckBodyLimit(Request))
+			serv->Send(Client, 413, "text/html", BodyTooLarge);
+		else if(Request.find(".py") != std::string::npos || Request.find(".php") != std::string::npos)
 			serv->CGIMethod(Request, Client);
 		else
 			serv->PostMethod(serv->config.GetUploadPath(), Request, Client);

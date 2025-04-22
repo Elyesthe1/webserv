@@ -28,12 +28,13 @@ class ServerWeb
         void CGIMethod(std::string path, const int Client);
         void GetMethod(std::string Line, const int Client, std::string &Data);
         void DeleteMethod(std::string Line, const int Client);
+        bool CheckBodyLimit(std::string Data);
+        void Send(int clientFd, int statusCode, const std::string& contentType, const std::string& body);
     private:
         std::string BuildHttpResponse(int statusCode, const std::string& contentType, const std::string& body);
         std::string BuildHttpHeader(const int StatusCode, const std::string& ContentType, const size_t ContentLen);
         std::string Send404Page();
         std::string BuildBody(std::string &FilePath, int &StatusCode);
-        void Send(int clientFd, int statusCode, const std::string& contentType, const std::string& body);
         std::string GetContentType(const std::string& path);
         int  IsRequestComplete(const std::string& request);
         bool CookieHandler(std::string &Data);
