@@ -10,12 +10,11 @@ class ServManager
     public:
         ServManager(const Config &conf);
         ~ServManager();
+        void run();
     private:
         std::map<int, std::string> Map_Client_Data;
-        // std::vector<int> Vec_Socket;
         std::map<std::string, ServerWeb*> Map_Host_Server;
         std::map<int, ServerWeb*> Map_Fd_Server;
-        void run();
         const Config conf;
         static int running;
         struct epoll_event events[1024];
@@ -40,8 +39,8 @@ class ServManager
         void launch();
         void InitServers();
         void AddToEpoll(const int fd);
-        static void SignalHandler(int Sig);
-        void ManageSignals(bool flag);
+        static void SignalHandler(const int Sig);
+        void ManageSignals(const bool flag);
         void InitLoop();
 
 

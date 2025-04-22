@@ -37,12 +37,11 @@ ServManager::ServManager(const Config &conf) : conf(conf)
 {
     this->ManageSignals(true);
     this->InitServers();
-    this->run();
 }
 
 int ServManager::Epoll_Wait()
 {
-	int fd = epoll_wait(this->epoll, this->events, MAX_CLIENT, -1);
+	const int fd = epoll_wait(this->epoll, this->events, MAX_CLIENT, -1);
 	if (fd == -1 && std::string(strerror(errno)) != "Interrupted system call" )
     		throw std::runtime_error("epoll_wait failed: " + std::string(strerror(errno)));
 	return fd;
@@ -58,16 +57,9 @@ void ServManager::MainLoop()
 {
 	while(ServManager::running)
 	{
-		int readyFD = this->Epoll_Wait();
+		const int readyFD = this->Epoll_Wait();
 		FdLoop(readyFD);
 	}
-}
-std::string ServManager::GetPath(std::string Line)
-{ 
-	std::size_t pos = Line.find(' ', 0);
-	if (pos == std::string::npos)
-		return "/";
-	return Line.substr(0, pos);
 }
 
 void ServManager::run()
@@ -110,7 +102,7 @@ void ServManager::InitServers()
 }
 
 
-void ServManager::SignalHandler(int Sig)
+void ServManager::SignalHandler(const int Sig)
 {
 	if (Sig == SIGINT)
 	{
@@ -119,7 +111,7 @@ void ServManager::SignalHandler(int Sig)
 	}
 }
 
-void ServManager::ManageSignals(bool flag)
+void ServManager::ManageSignals(const bool flag)
 {
 	if (flag)
 		signal(SIGINT, ServManager::SignalHandler);
@@ -137,7 +129,7 @@ int ServManager::AcceptClient(const int socket)
 {
     struct sockaddr_in addrr;
     socklen_t addrlen = sizeof(struct sockaddr_in);
-    int newFd = accept(socket, (struct sockaddr*)&addrr, &addrlen);
+    const int newFd = accept(socket, (struct sockaddr*)&addrr, &addrlen);
     if (newFd == -1)
     {
 
@@ -151,7 +143,7 @@ int ServManager::AcceptClient(const int socket)
 
 void ServManager::NewClient(const int socket)
 {
-	int NewClient = this->AcceptClient(socket);
+	const int NewClient = this->AcceptClient(socket);
 	struct epoll_event eve;
 	eve.events = EPOLLIN ;
  	eve.data.fd = NewClient;
@@ -175,13 +167,13 @@ void ServManager::ReceiveData(const struct epoll_event &events)
 
 int ServManager::IsRequestComplete(const std::string& request)
 {
-	std::size_t pos = request.find("\r\n\r\n");
+	const std::size_t pos = request.find("\r\n\r\n");
 	if (pos == std::string::npos)
 		return 0;
-	std::size_t contentLenPos = request.find("Content-Length:");
-	if (contentLenPos != std::string::npos)
+	const std::size_t contentPos = request.find("Content-Length:");
+	if (contentPos != std::string::npos)
 	{
-		int length = std::atoi(request.c_str() + contentLenPos + 15);
+		const int length = std::atoi(request.c_str() + contentPos + 15);
 		std::size_t bodyStart = request.find("\r\n\r\n") + 4;
 		if (request.size() >= bodyStart + length)
 			return 1;
@@ -193,45 +185,20 @@ int ServManager::IsRequestComplete(const std::string& request)
 
 ServerWeb *ServManager::ExtractHost(const std::string& request)
 {
-	std::size_t hostpos = request.find("Host:");
+	const std::size_t hostpos = request.find("Host:");
 	if (hostpos == std::string::npos)
 		return 	this->Map_Host_Server.begin()->second;
 
-	std::size_t hostposend = request.find(":", hostpos+ 6);
+	const std::size_t hostposend = request.find(":", hostpos+ 6);
 	if (hostposend == std::string::npos)
 		return 	this->Map_Host_Server.begin()->second;
 
-	std::string host = request.substr(hostpos + 6 , hostposend - (hostpos + 6));
+	const std::string host = request.substr(hostpos + 6 , hostposend - (hostpos + 6));
 	if (this->Map_Host_Server.count(host))
 		return this->Map_Host_Server[host];
 
 	return this->Map_Host_Server.begin()->second;
 }
-
-
-void ServManager::RequestParsing(std::string Request, const int Client)
-{
-	ServerWeb *serv = this->ExtractHost(Request);
-	if (!std::strncmp(Request.c_str(), "GET", 3))
-	{
-		if(Request.find(".py") != std::string::npos || Request.find(".php") != std::string::npos)
-			serv->CGIMethod(Request, Client);
-		else
-			serv->GetMethod(this->GetPath(&Request[4]), Client, Request);
-	}
-	else if (!std::strncmp(Request.c_str(), "DELETE", 6))
-		serv->DeleteMethod(serv->config.GetRoot() + this->GetPath(&Request[7]), Client);
-	else if (!std::strncmp(Request.c_str(), "POST", 4))
-	{
-		if (serv->CheckBodyLimit(Request))
-			serv->Send(Client, 413, "text/html", BodyTooLarge);
-		else if(Request.find(".py") != std::string::npos || Request.find(".php") != std::string::npos)
-			serv->CGIMethod(Request, Client);
-		else
-			serv->PostMethod(serv->config.GetUploadPath(), Request, Client);
-	}
-}
-
 
 int ServManager::RecvLoop(const int Client)
 {
@@ -241,13 +208,13 @@ int ServManager::RecvLoop(const int Client)
 		this->Map_Client_Data[Client].append(buffer, status);	
 	if (status == 0)
 	{
-		this->RequestParsing(this->Map_Client_Data[Client], Client);
+		this->ExtractHost(this->Map_Client_Data[Client])->RequestParsing(this->Map_Client_Data[Client], Client);
 		this->Map_Client_Data[Client].clear();
 		return 0;
 	}
 	else if (status == -1 && this->IsRequestComplete(this->Map_Client_Data[Client]))
 	{
-		this->RequestParsing(this->Map_Client_Data[Client], Client);
+		this->ExtractHost(this->Map_Client_Data[Client])->RequestParsing(this->Map_Client_Data[Client], Client);
 		this->Map_Client_Data[Client].clear();
 		return 0;
 	}

@@ -69,7 +69,7 @@ Config::Config(int ac, char **av)
     host.push_back("");
     host.push_back("www.example.com");
 
-    for(int i = 0; i < 1; i++)
+    for(int i = 0; i < 2; i++)
     {
         Config conf;
         conf.SetSocketAddrr(port[i]);

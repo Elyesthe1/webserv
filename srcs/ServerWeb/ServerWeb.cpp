@@ -6,7 +6,7 @@ bool ServerWeb::CheckBodyLimit(std::string Data)
 {
 	if (!this->config.IsBodyLimited())
 		return false;
-	std::size_t pos = Data.find("Content-Length:");
+	const std::size_t pos = Data.find("Content-Length:");
 	if (pos == std::string::npos)
 		return true;
 	if (std::atoi(Data.c_str() + pos + 15) > this->config.GetMaxBody())
@@ -64,11 +64,11 @@ std::string ServerWeb::BuildBody(std::string &FilePath, int &StatusCode)
 
 std::string ServerWeb::GetContentType(const std::string& path)
 {
-    std::size_t dot = path.find_last_of(".");
+    const std::size_t dot = path.find_last_of(".");
     if (dot == std::string::npos)
     	return "application/octet-stream"; 
 
-    std::string extention = path.substr(dot + 1);
+    const std::string extention = path.substr(dot + 1);
     if (extention == "html" || extention == "htm")
     	return "text/html";
 	else if (extention == "mp3" || extention == "m4a" )
@@ -97,12 +97,12 @@ std::string ServerWeb::GetContentType(const std::string& path)
 
 std::string ServerWeb::BuildHttpResponse(int statusCode, const std::string& contentType, const std::string& body)
 {
-	std::string header = this->BuildHttpHeader(statusCode, contentType, body.size());
+	const std::string header = this->BuildHttpHeader(statusCode, contentType, body.size());
 	return header + body;
 }
 void ServerWeb::Send(int clientFd, int statusCode, const std::string& contentType, const std::string& body)
 {
-	std::string response = this->BuildHttpResponse(statusCode, contentType, body);
+	const std::string response = this->BuildHttpResponse(statusCode, contentType, body);
 	if (send(clientFd, response.c_str(), response.size(), 0) == -1)
 		throw std::runtime_error(std::string("send() failed: ") + strerror(errno));
 }
@@ -111,7 +111,7 @@ void ServerWeb::Send(int clientFd, int statusCode, const std::string& contentTyp
 bool ServerWeb::CookieHandler(std::string &Data)
 {
 	int static visited = 0;
-	std::size_t PosCookie = Data.find("visitCount=");
+	const std::size_t PosCookie = Data.find("visitCount=");
 	if (PosCookie != std::string::npos && std::atoi(Data.substr(PosCookie + 11).c_str()) == 9 && !visited)
 	{
 		visited++;
@@ -152,26 +152,28 @@ void ServerWeb::DeleteMethod(std::string path, const int Client)
 
 void ServerWeb::PostMethod(std::string path, std::string Data, const int Client)
 {
-    size_t BoundaryStart = Data.find("boundary=");
+    const std::size_t BoundaryStart = Data.find("boundary=");
     if (BoundaryStart == std::string::npos)
         return this->Send(Client, 400, "", "Missing boundary");
-    size_t boundaryEnd = Data.find("\r\n", BoundaryStart);
-    std::string boundary = "--" + Data.substr(BoundaryStart + 9, boundaryEnd - (BoundaryStart + 9)); 
-    size_t File = Data.find("filename=");
+
+    const std::size_t boundaryEnd = Data.find("\r\n", BoundaryStart);
+    const std::string boundary = "--" + Data.substr(BoundaryStart + 9, boundaryEnd - (BoundaryStart + 9)); 
+
+   	std::size_t File = Data.find("filename=");
     if (File == std::string::npos)
         return this->Send(Client, 400, "", "Missing filename");
 
-    size_t startName = Data.find("\"", File + 9) + 1;
-    size_t endName = Data.find("\"", startName);
-    std::string filename = Data.substr(startName, endName - startName);
-    std::string fullpath = path + "/" + filename;
+    const std::size_t startName = Data.find("\"", File + 9) + 1;
+    const std::size_t endName = Data.find("\"", startName);
+    const std::string filename = Data.substr(startName, endName - startName);
+    const std::string fullpath = path + "/" + filename;
 
-    size_t contentStart = Data.find("\r\n\r\n", endName);
+    std::size_t contentStart = Data.find("\r\n\r\n", endName);
     if (contentStart == std::string::npos)
         return this->Send(Client, 400, "", "Missing content start");
     contentStart += 4;
 
-    size_t contentEnd = Data.find(boundary, contentStart);
+    const std::size_t contentEnd = Data.find(boundary, contentStart);
     if (contentEnd == std::string::npos)
 		return this->Send(Client, 400, "", "Missing content end");
 
@@ -185,5 +187,35 @@ void ServerWeb::PostMethod(std::string path, std::string Data, const int Client)
 
 void ServerWeb::CGIMethod(std::string Data, const int Client)
 {
-	std::string exec = Data.find(".py") != std::string::npos ? "/usr/bin/python3" : "/usr/bin/php-cgi";
+	const std::string exec = Data.find(".py") != std::string::npos ? "/usr/bin/python3" : "/usr/bin/php-cgi";
+}
+
+std::string ServerWeb::GetPath(std::string Line)
+{ 
+	const std::size_t pos = Line.find(' ', 0);
+	if (pos == std::string::npos)
+		return "/";
+	return Line.substr(0, pos);
+}
+
+void ServerWeb::RequestParsing(std::string Request, const int Client)
+{
+	if (!std::strncmp(Request.c_str(), "GET", 3))
+	{
+		if(Request.find(".py") != std::string::npos || Request.find(".php") != std::string::npos)
+			this->CGIMethod(Request, Client);
+		else
+			this->GetMethod(this->GetPath(&Request[4]), Client, Request);
+	}
+	else if (!std::strncmp(Request.c_str(), "DELETE", 6))
+		this->DeleteMethod(this->config.GetRoot() + this->GetPath(&Request[7]), Client);
+	else if (!std::strncmp(Request.c_str(), "POST", 4))
+	{
+		if (this->CheckBodyLimit(Request))
+			this->Send(Client, 413, "text/html", BodyTooLarge);
+		else if(Request.find(".py") != std::string::npos || Request.find(".php") != std::string::npos)
+			this->CGIMethod(Request, Client);
+		else
+			this->PostMethod(this->config.GetUploadPath(), Request, Client);
+	}
 }

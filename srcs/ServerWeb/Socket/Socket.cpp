@@ -2,16 +2,13 @@
 
 int Socket::GetFd() const {return this->socketFD;}
 
-Socket::Socket(const Config &config)
-{
-    this->InitSocket(config);
-}
+Socket::Socket(const Config &config) {this->InitSocket(config);}
 
 void Socket::InitSocket(const Config &config) 
 {
     this->CreateSocket();
     SetNonBlocking(this->socketFD);
-    this->SetSocketOp(); // pas encore sure des option a mettre 
+    this->SetSocketOp();
     this->BindSocket(config);
     this->Listen();
 }
@@ -34,7 +31,7 @@ void Socket::CreateSocket()
 }
 void Socket::SetSocketOp() const
 {
-    int option = 1;
+    const int option = 1;
     if (setsockopt(this->socketFD, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &option, sizeof(option)) == -1) 
         throw std::runtime_error("Failed to set socket option: ");
 }
