@@ -5,6 +5,8 @@
 #include <netinet/in.h>
 #include <cstdlib>
 #include <vector>
+const std::string intTostring(const int n);
+
 class Config
 {
     public:

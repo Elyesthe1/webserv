@@ -29,34 +29,19 @@ void Config::SetSocketAddrr(const int port)
     this->ports = 8080;
 }
 
-void Config::SetRoot(const std::string Root)
-{
-    this->root = Root;
-}
+void Config::SetRoot(const std::string Root) {this->root = Root;}
 
-void Config::SetIndex(const std::string Index)
-{
-    this->index = Index;
-}
+void Config::SetIndex(const std::string Index) {this->index = Index;}
 
-void   Config::Set404(const std::string path)
-{
-    this->Error404Path = path;
-}
-void Config::SetUpload(const std::string path)
-{
-    this->UploadPath = path;
-}
+void   Config::Set404(const std::string path) {this->Error404Path = path;}
+void Config::SetUpload(const std::string path) {this->UploadPath = path;}
 void Config::SetBodyLimit(const int limit, bool islimited)
 {
     this->MaxBody = limit;
     this->is_body_limited = islimited;
 }
 
-void Config::SetHost(const std::string Host)
-{
-    this->host = Host;
-}
+void Config::SetHost(const std::string Host) {this->host = Host + ":" + intTostring(this->ports);}
 
 
 
@@ -85,7 +70,7 @@ Config::Config(int ac, char **av)
     host.push_back("");
     host.push_back("www.example.com");
 
-    for(int i = 0; i < 1; i++)
+    for(int i = 0; i < 2; i++)
     {
         Config conf;
         conf.SetSocketAddrr(port[i]);

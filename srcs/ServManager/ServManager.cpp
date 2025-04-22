@@ -193,7 +193,10 @@ int ServManager::IsRequestComplete(const std::string& request)
 
 ServerWeb *ServManager::ExtractHost(const std::string& request)
 {
-	std::size_t hostpos = request.find("host:");
+	std::size_t hostpos = request.find("Host:");
+	std::cout << hostpos << std::endl;
+	if (hostpos == std::string::npos)
+		return 	this->Map_Host_Server.begin()->second;
 	std::string host = request.substr(hostpos + 7);
 	if (this->Map_Host_Server.count(host))
 		return this->Map_Host_Server[host];
@@ -203,7 +206,8 @@ ServerWeb *ServManager::ExtractHost(const std::string& request)
 
 void ServManager::RequestParsing(std::string Request, const int Client)
 {
-	// std::cout << Request << std::endl;
+	std::cout << Request << std::endl;
+	std::cout << this->ExtractHost(Request) << std::endl;
 	ServerWeb *serv = this->ExtractHost(Request);
 	if (!std::strncmp(Request.c_str(), "GET", 3))
 	{
