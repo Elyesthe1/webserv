@@ -1,14 +1,15 @@
 #include "../../includes/Config.hpp"
 #include <netinet/ip.h>
-const struct sockaddr_in& Config::Getaddr() const {return this->address;}
+const struct sockaddr_in& Config::Getaddr(const int i) const {return this->address[i];}
 
-int Config::GetPorts() const {return this->ports;}
+int Config::GetPorts(const int i) const {return this->ports[i];}
 
 std::string Config::GetRoot() const {return this->root;}
 
 const std::string &Config::Get404() const {return this->Error404Path;}
 const std::string &Config::Get413() const {return this->Error413Path;}
 
+int Config::address_size() const {return this->address.size();}
 
 std::string Config::GetIndex() const {return this->index;}
 
@@ -16,7 +17,6 @@ const std::string Config::GetUploadPath() const {return this->UploadPath;}
 
 int Config::GetMaxBody() const {return this->MaxBody;}
 
-bool Config::IsBodyLimited() const {return this->is_body_limited;}
 Config Config::GetConfig(int i) const {return this->Vec_Conf[i];}
 int Config::size() const {return this->How_Much_Server;}
 
@@ -25,10 +25,12 @@ std::string Config::GetHost() const {return this->host;}
 
 void Config::SetSocketAddrr(const int port)
 {
-    this->address.sin_family = AF_INET;
-    this->address.sin_addr.s_addr = INADDR_ANY;
-    this->address.sin_port = htons(port);
-    this->ports = port;
+    struct sockaddr_in adrr;
+    adrr.sin_family = AF_INET;
+    adrr.sin_addr.s_addr = INADDR_ANY;
+    adrr.sin_port = htons(port);
+    this->address.push_back(adrr);
+    this->ports.push_back(port);
 }
 
 void Config::SetRoot(const std::string Root) {this->root = Root;}
@@ -37,11 +39,7 @@ void Config::SetIndex(const std::string Index) {this->index = Index;}
 
 void   Config::Set404(const std::string path) {this->Error404Path = path;}
 void Config::SetUpload(const std::string path) {this->UploadPath = path;}
-void Config::SetBodyLimit(const int limit, bool islimited)
-{
-    this->MaxBody = limit;
-    this->is_body_limited = islimited;
-}
+void Config::SetBodyLimit(const int limit) {this->MaxBody = limit;}
 
 void Config::Set413(const std::string path) {this->Error413Path = path;}
 
@@ -70,9 +68,9 @@ Config::Config(int ac, char **av)
     std::vector<std::string> Upload;
     Upload.push_back("www/casino/uploads");
     Upload.push_back("www/default/uploads");
-    std::vector<std::pair<int,int> > Limit;
-    Limit.push_back(std::make_pair(0, 0));
-    Limit.push_back(std::make_pair(100, 1));
+    std::vector<int> Limit;
+    Limit.push_back(-1);
+    Limit.push_back(100);
     std::vector<std::string> host;
     host.push_back("");
     host.push_back("www.example.com");
@@ -85,7 +83,7 @@ Config::Config(int ac, char **av)
         conf.SetIndex(index[i]);
         conf.Set404(page404[i]);
         conf.SetUpload(Upload[i]);
-        conf.SetBodyLimit(Limit[i].first, Limit[i].second);
+        conf.SetBodyLimit(Limit[i]);
         conf.SetHost(host[i]);
         this->How_Much_Server = i + 1;
         this->Vec_Conf.push_back(conf);

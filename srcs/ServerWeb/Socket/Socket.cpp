@@ -9,7 +9,8 @@ void Socket::InitSocket(const Config &config)
     this->CreateSocket();
     SetNonBlocking(this->socketFD);
     this->SetSocketOp();
-    this->BindSocket(config);
+    for(int i = 0; i < config.address_size(); i++)
+        this->BindSocket(i);
     this->Listen();
 }
 
@@ -19,7 +20,7 @@ void Socket::Listen() const
         throw std::runtime_error("Failed to Listen the socket: ");
 }
 
-void Socket::BindSocket(const Config &config) const
+void Socket::BindSocket(const int) const
 {
     if (bind(this->socketFD, (struct sockaddr*)&config.Getaddr(), sizeof(config.Getaddr())) == - 1)
         throw std::runtime_error("Failed to bind the socket: ");

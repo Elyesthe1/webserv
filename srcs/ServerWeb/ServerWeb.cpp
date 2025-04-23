@@ -4,7 +4,7 @@ ServerWeb::ServerWeb(Config conf) : config(conf), socket(conf) {}
 
 bool ServerWeb::CheckBodyLimit(std::string Data)
 {
-	if (!this->config.IsBodyLimited())
+	if (this->config.GetMaxBody() == -1)
 		return false;
 	const std::size_t pos = Data.find("Content-Length:");
 	if (pos == std::string::npos)
