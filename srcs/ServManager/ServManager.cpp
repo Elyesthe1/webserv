@@ -64,6 +64,8 @@ void ServManager::MainLoop()
 
 void ServManager::run()
 {
+	if (!ServManager::running)
+		return ;
 	Logger::InfoLog("ServerManager", "ServerManager started successfully!");
     this->MainLoop();
 }
@@ -82,7 +84,10 @@ void ServManager::InitLoop()
         catch (const std::exception &e)
         {
             if (i == 0)
+			{
+				ServManager::running = 0;
                 throw std::runtime_error("Critical: Failed to initialize the first server. Aborting startup.");
+			}
             Logger::WarningLog("[!] Skipping server " + intTostring(i), "Reason: " + std::string(e.what()));
         }
     }

@@ -9,9 +9,11 @@ void Socket::InitSocket(const Config &config)
     this->CreateSocket();
     SetNonBlocking(this->socketFD);
     this->SetSocketOp();
-    for(int i = 0; i < config.address_size(); i++)
-        this->BindSocket(i);
+    for(int i = 0; i < config.Vec_address_size(); i++)
+        this->BindSocket(config, i);
     this->Listen();
+    for(int i = 0; i < config.Vec_address_size(); i++)
+        Logger::InfoLog("Socket", "✅ Server is listening on socket " + intTostring(this->socketFD) + " at port " + intTostring(config.Getports(i)));
 }
 
 void Socket::Listen() const
@@ -20,9 +22,9 @@ void Socket::Listen() const
         throw std::runtime_error("Failed to Listen the socket: ");
 }
 
-void Socket::BindSocket(const int) const
+void Socket::BindSocket(const Config &config, const int i) const
 {
-    if (bind(this->socketFD, (struct sockaddr*)&config.Getaddr(), sizeof(config.Getaddr())) == - 1)
+    if (bind(this->socketFD, (struct sockaddr*)&config.Getaddr(i), sizeof(config.Getaddr(i))) == - 1)
         throw std::runtime_error("Failed to bind the socket: ");
 }
 void Socket::CreateSocket()

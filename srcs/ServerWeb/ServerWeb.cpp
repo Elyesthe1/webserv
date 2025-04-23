@@ -14,26 +14,36 @@ bool ServerWeb::CheckBodyLimit(std::string Data)
 	return false;
 }
 
-std::string ServerWeb::Send413Page() 
+std::string ServerWeb::BuildErrorPage(const int status)
 {
-	std::ifstream file(this->config.Get413().c_str());
+	std::ifstream file;
+	switch(status)
+	{
+		case 404: file.open(this->config.Get404().c_str()); break;
+		case 413: file.open(this->config.Get413().c_str()); break;
+		case 403: file.open(this->config.Get403().c_str()); break;
+		case 400: file.open(this->config.Get400().c_str()); break;
+		case 500: file.open(this->config.Get500().c_str()); break;
+		case 405: file.open(this->config.Get405().c_str()); break;
+		default : file.open(this->config.Get501().c_str()); break;
+	}
 	if (!file)
-		return BodyTooLarge;
-	std::stringstream buffer;
-	buffer << file.rdbuf();
+	{
+		switch(status)
+		{
+			case 404: return NOT_FOUND_404;
+			case 413: return BodyTooLarge;
+			case 403: return FORBIDDEN_403;
+			case 400: return BAD_REQUEST_400;
+			case 500: return INTERNALERROR;
+			case 405: return METHOD_NOT_ALLOWED;
+			default : return NOT_IMPLEMENTED;
+		}
+	}
+	std::stringstream body;
+	body << file.rdbuf();
 	file.close();
-	return buffer.str();
-}
-
-std::string ServerWeb::Send404Page() 
-{
-	std::ifstream file(this->config.Get404().c_str());
-	if (!file)
-		return NOT_FOUND_404;
-	std::stringstream buffer;
-	buffer << file.rdbuf();
-	file.close();
-	return buffer.str();
+	return body.str();
 }
 
 std::string ServerWeb::BuildHttpHeader(const int StatusCode, const std::string& ContentType, const size_t ContentLen) 
@@ -48,6 +58,8 @@ std::string ServerWeb::BuildHttpHeader(const int StatusCode, const std::string& 
 		case 403: Status = "Forbidden"; break;
 		case 400: Status = "Bad Request"; break;
 		case 500: Status = "Internal Server Error"; break;
+		case 501: Status = "Not Implemented"; break;
+		case 405: Status = "Method Not Allowed"; break;
 		default:  Status = "Unknown"; break;
     }
     std::string header = "HTTP/1.1 " + intTostring(StatusCode) + " " + Status + "\r\n";
@@ -64,8 +76,7 @@ std::string ServerWeb::BuildBody(std::string &FilePath, int &StatusCode)
 	if (!file)
 	{
 		StatusCode = 404;
-		FilePath = "404.html";
-		return this->Send404Page();
+		return this->BuildErrorPage(404);
 	}
 	std::stringstream buffer;
 	buffer << file.rdbuf();
@@ -113,7 +124,9 @@ std::string ServerWeb::BuildHttpResponse(int statusCode, const std::string& cont
 }
 void ServerWeb::Send(int clientFd, int statusCode, const std::string& contentType, const std::string& body)
 {
-	const std::string response = this->BuildHttpResponse(statusCode, contentType, body);
+	if (statusCode)
+		const std::string response = this->BuildHttpResponse(statusCode, contentType, body);
+	const std::string response = body;
 	if (send(clientFd, response.c_str(), response.size(), 0) == -1)
 		throw std::runtime_error(std::string("send() failed: ") + strerror(errno));
 }
@@ -133,21 +146,65 @@ bool ServerWeb::CookieHandler(std::string &Data)
 	return false;
 }
 
+std::string ServerWeb::AutoIndex(const std::string& Path, const std::string& Url)
+{
+    std::stringstream site;
+    site << "<html><head><title>Index of " << Url << "</title></head><body>";
+    site << "<h1>Index of " << Url << "</h1><ul>";
+
+    DIR *dir = opendir(Path.c_str());
+    if (!dir) 
+		return "<h1>Failed to open directory</h1>";
+
+    struct dirent *info;
+    while ((info = readdir(dir)) != NULL)
+        if (std::string(info->d_name) != ".") 
+        	site << "<li><a href=\"" << Url << "/" << info->d_name << "\">" << info->d_name << "</a></li>";
+
+    closedir(dir);
+    site << "</ul></body></html>";
+    return site.str();
+}
+
+
+std::string ServerWeb::BuildRedirectionHeader(const std::string redirection)
+{
+	std::ostringstream stream;
+	std::stringstream header;
+	stream << "HTTP/1.1 301 Moved Permanently\r\n";
+	stream << "Location: " << redirection << "\r\n";
+	stream << "Content-Length: 0\r\n\r\n";
+	header << stream;
+	return header.str();
+}
+
 
 void ServerWeb::GetMethod(std::string path, const int Client, std::string &Data)
 {
 	int statuscode = 200;
 	std::string body;
+	const Route *route = this->config.FindRoute(path);
 	std::string CompletePath;
-	if (!path[1])
-	{
-		if (this->CookieHandler(Data))
-			CompletePath = this->config.GetRoot() + "/" + "10th_visit.html";
-		else
-			CompletePath = this->config.GetRoot() + "/" + this->config.GetIndex();
-	}
+	if (!route)
+		return this->Send(Client, 404, "Text/html", this->BuildErrorPage(404));
+	if (!route->redirection.empty())
+		this->Send(Client, 0, "", this->BuildRedirectionHeader(route->redirection));
+	if (std::find(route->methods.begin(), route->methods.end(), "GET") == route->methods.end())
+		return this->Send(Client, 405, "Text/html", this->BuildErrorPage(405));
+	if (this->CookieHandler(Data))
+		CompletePath = "www/casino/10th_visit.html";
 	else
-		CompletePath = this->config.GetRoot() + path;
+		CompletePath =  route->root + path;
+	if (IsDirectory(CompletePath))
+	{
+		if(!route->index.empty())
+			CompletePath += "/" + route->index;
+		else if (route->autoindex)
+			return this->Send(Client, 200, "Text/html", this->AutoIndex(CompletePath, path));
+		else
+			return this->Send(Client, 403, "Text/html", this->BuildErrorPage(403));
+
+	}
 	body = this->BuildBody(CompletePath, statuscode);
 	this->Send(Client, statuscode,this->GetContentType(CompletePath), body);
 }
@@ -156,9 +213,9 @@ void ServerWeb::DeleteMethod(std::string path, const int Client)
 {
 	struct stat buffer;
     if (stat(path.c_str(), &buffer) == -1)
-		this->Send(Client, 404, "", "");
+		this->Send(Client, 404, "text/html", this->BuildErrorPage(404));
 	else if (std::remove(path.c_str()) != 0)
-		this->Send(Client, 403, "", "");
+		this->Send(Client, 403, "text/html", this->BuildErrorPage(403));
 	else
 		this->Send(Client, 204, "", "");
 }
@@ -167,14 +224,14 @@ void ServerWeb::PostMethod(std::string path, std::string Data, const int Client)
 {
     const std::size_t BoundaryStart = Data.find("boundary=");
     if (BoundaryStart == std::string::npos)
-        return this->Send(Client, 400, "", "Missing boundary");
+        return this->Send(Client, 400, "text/html", this->BuildErrorPage(400));
 
     const std::size_t boundaryEnd = Data.find("\r\n", BoundaryStart);
     const std::string boundary = "--" + Data.substr(BoundaryStart + 9, boundaryEnd - (BoundaryStart + 9)); 
 
    	std::size_t File = Data.find("filename=");
     if (File == std::string::npos)
-        return this->Send(Client, 400, "", "Missing filename");
+        return this->Send(Client, 400, "text/html", this->BuildErrorPage(400));
 
     const std::size_t startName = Data.find("\"", File + 9) + 1;
     const std::size_t endName = Data.find("\"", startName);
@@ -183,17 +240,17 @@ void ServerWeb::PostMethod(std::string path, std::string Data, const int Client)
 
     std::size_t contentStart = Data.find("\r\n\r\n", endName);
     if (contentStart == std::string::npos)
-        return this->Send(Client, 400, "", "Missing content start");
+        return this->Send(Client, 400, "text/html", this->BuildErrorPage(400));
     contentStart += 4;
 
 
     const std::size_t contentEnd = Data.find(boundary, contentStart);
     if (contentEnd == std::string::npos)
-		return this->Send(Client, 400, "", "Missing content end");
+		return this->Send(Client, 400, "text/html", this->BuildErrorPage(400));
 
     std::ofstream of(fullpath.c_str(), std::ios::binary);
 	if (!of)
-		return this->Send(Client, 500, "", "Failed to open file");
+		return this->Send(Client, 500, "text/html", this->BuildErrorPage(500));
     of.write(Data.c_str() + contentStart, contentEnd - contentStart - 2);
     of.close();
 	this->Send(Client, 204, "", "");
@@ -226,10 +283,12 @@ void ServerWeb::RequestParsing(std::string Request, const int Client)
 	else if (!std::strncmp(Request.c_str(), "POST", 4))
 	{
 		if (this->CheckBodyLimit(Request))
-			this->config.Get413();
+			return this->Send(Client, 413, "text/html", this->BuildErrorPage(413));
 		else if(Request.find(".py") != std::string::npos || Request.find(".php") != std::string::npos)
 			this->CGIMethod(Request, Client);
 		else
 			this->PostMethod(this->config.GetUploadPath(), Request, Client);
 	}
+	else
+		this->Send(Client, 501, "text/html", this->BuildErrorPage(501));
 }

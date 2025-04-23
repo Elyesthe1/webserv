@@ -26,7 +26,7 @@ class Socket
         void CloseSocket();
         void InitSocket(const Config &config);
         void Listen() const ;
-        void BindSocket(const Config &config) const ;
+        void BindSocket(const Config &config, const int i) const ;
         void SetSocketOp() const;
         void CreateSocket();
         int socketFD;

@@ -11,6 +11,7 @@ SRCS = srcs/main.cpp \
 	   srcs/Logger/Logger.cpp \
 	   srcs/utils/utils.cpp \
 	   srcs/ServManager/ServManager.cpp \
+	   srcs/Config/Route/Route.cpp \
 
 OBJS = $(SRCS:.cpp=.o)
 
