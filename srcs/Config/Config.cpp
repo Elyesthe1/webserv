@@ -7,6 +7,8 @@ int Config::GetPorts() const {return this->ports;}
 std::string Config::GetRoot() const {return this->root;}
 
 const std::string &Config::Get404() const {return this->Error404Path;}
+const std::string &Config::Get413() const {return this->Error413Path;}
+
 
 std::string Config::GetIndex() const {return this->index;}
 
@@ -41,6 +43,9 @@ void Config::SetBodyLimit(const int limit, bool islimited)
     this->is_body_limited = islimited;
 }
 
+void Config::Set413(const std::string path) {this->Error413Path = path;}
+
+
 void Config::SetHost(const std::string Host) {this->host = Host;}
 
 
@@ -56,6 +61,9 @@ Config::Config(int ac, char **av)
     std::vector<std::string> index;
     index.push_back("index.html");
     index.push_back("index.html");
+    std::vector<std::string> page413;
+    page413.push_back("www/default/errors/413.html");
+    page413.push_back("www/default/errors/413.ht");
     std::vector<std::string> page404;
     page404.push_back("www/default/errors/404.html");
     page404.push_back("www/default/errors/404.ht");

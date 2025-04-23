@@ -21,13 +21,9 @@
         visitCount = parseInt(getCookie("visitCount") || "0") + 1;
       }
 
-      // Toujours mettre à jour le cookie après calcul
       document.cookie = "visitCount=" + visitCount + "; path=/;";
-
-      // Mise à jour DOM avec la valeur calculée, pas re-lue
       document.getElementById("visit-count").textContent = visitCount;
 
-      // Audio
       audio = new Audio("/audio/bienvenue.m4a");
       if (isNewSession) {
         audio.play().catch(() => {
@@ -37,6 +33,13 @@
 
       document.getElementById("play-audio").addEventListener("click", () => {
         audio.play();
+      });
+
+      // Clear cookies button
+      document.getElementById("clear-cookies").addEventListener("click", () => {
+        document.cookie = "sessionId=; Max-Age=0; path=/;";
+        document.cookie = "visitCount=; Max-Age=0; path=/;";
+        location.reload();
       });
     });
 
@@ -57,6 +60,7 @@
   <h2>Nombre de visites (session) : <span id="visit-count">0</span></h2>
 
   <button id="play-audio">🔊 Activer le son</button>
+  <button id="clear-cookies">🧼 Clear Cookies</button>
 
   <ul>
     <li><a href="/about.html">About</a></li>

@@ -16,6 +16,7 @@ class Config
         int GetPorts() const;
         std::string GetRoot() const;
         const std::string &Get404() const;
+        const std::string &Get413() const;
         std::string GetIndex() const ;
         const std::string GetUploadPath() const ;
         int GetMaxBody() const;
@@ -32,7 +33,10 @@ class Config
         void SetUpload(const std::string path);
         void SetBodyLimit(const int limit, bool islimited);
         void SetHost(const std::string host);
+        void Set413(const std::string path);
+
     
+        std::string Error413Path;
         std::string host;
         int How_Much_Server;
         std::vector<Config> Vec_Conf;

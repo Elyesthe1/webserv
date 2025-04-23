@@ -26,6 +26,7 @@ class ServerWeb
         Socket socket;
         void RequestParsing(std::string Request, const int Client);
     private:
+        std::string Send413Page() ;
         std::string GetPath(std::string Line);
         void PostMethod(std::string path, std::string body, const int Client);
         void CGIMethod(std::string path, const int Client);

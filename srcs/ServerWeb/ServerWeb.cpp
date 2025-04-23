@@ -14,6 +14,17 @@ bool ServerWeb::CheckBodyLimit(std::string Data)
 	return false;
 }
 
+std::string ServerWeb::Send413Page() 
+{
+	std::ifstream file(this->config.Get413().c_str());
+	if (!file)
+		return BodyTooLarge;
+	std::stringstream buffer;
+	buffer << file.rdbuf();
+	file.close();
+	return buffer.str();
+}
+
 std::string ServerWeb::Send404Page() 
 {
 	std::ifstream file(this->config.Get404().c_str());
@@ -112,6 +123,8 @@ bool ServerWeb::CookieHandler(std::string &Data)
 {
 	int static visited = 0;
 	const std::size_t PosCookie = Data.find("visitCount=");
+	if (PosCookie != std::string::npos &&  std::atoi(Data.substr(PosCookie + 11).c_str()) == 1	)
+		visited = 0;
 	if (PosCookie != std::string::npos && std::atoi(Data.substr(PosCookie + 11).c_str()) == 9 && !visited)
 	{
 		visited++;
@@ -173,6 +186,7 @@ void ServerWeb::PostMethod(std::string path, std::string Data, const int Client)
         return this->Send(Client, 400, "", "Missing content start");
     contentStart += 4;
 
+
     const std::size_t contentEnd = Data.find(boundary, contentStart);
     if (contentEnd == std::string::npos)
 		return this->Send(Client, 400, "", "Missing content end");
@@ -212,7 +226,7 @@ void ServerWeb::RequestParsing(std::string Request, const int Client)
 	else if (!std::strncmp(Request.c_str(), "POST", 4))
 	{
 		if (this->CheckBodyLimit(Request))
-			this->Send(Client, 413, "text/html", BodyTooLarge);
+			this->config.Get413();
 		else if(Request.find(".py") != std::string::npos || Request.find(".php") != std::string::npos)
 			this->CGIMethod(Request, Client);
 		else
