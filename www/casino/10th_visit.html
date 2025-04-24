@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>🎉 10ème visite ! 🎉</title>
+  <style>
+    body {
+      margin: 0;
+      background-color: #111;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+      font-family: sans-serif;
+      flex-direction: column;
+    }
+
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    h1 {
+      font-size: 3rem;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎉 Bravo pour ta 10ème visite ! 🎉</h1>
+
+  <audio id="celebration-audio" autoplay hidden>
+    <source src="/audio/son.mp3" type="audio/mpeg">
+    Ton navigateur ne supporte pas l'audio HTML5.
+  </audio>
+
+  <canvas id="confetti-canvas"></canvas>
+
+  <script>
+    // Confettis simple (lib légère)
+    function confettiEffect() {
+      const duration = 5 * 1000;
+      const animationEnd = Date.now() + duration;
+      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+      function randomInRange(min, max) {
+        return Math.random() * (max - min) + min;
+      }
+
+      const interval = setInterval(function() {
+        const timeLeft = animationEnd - Date.now();
+
+        if (timeLeft <= 0) {
+          return clearInterval(interval);
+        }
+
+        const particleCount = 50 * (timeLeft / duration);
+        confetti(Object.assign({}, defaults, {
+          particleCount,
+          origin: { x: randomInRange(0.1, 0.9), y: Math.random() - 0.2 }
+        }));
+      }, 250);
+    }
+
+    // Charger confetti lib
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js';
+    script.onload = confettiEffect;
+    document.head.appendChild(script);
+
+    // Gestion audio fallback (en cas d'autoplay bloqué)
+    const audio = document.getElementById('celebration-audio');
+    document.addEventListener('click', () => {
+      if (audio.paused) audio.play();
+    });
+  </script>
+</body>
+</html>
