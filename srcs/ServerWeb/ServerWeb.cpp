@@ -173,12 +173,10 @@ std::string ServerWeb::AutoIndex(const std::string& Path, const std::string& Url
 std::string ServerWeb::BuildRedirectionHeader(const std::string redirection)
 {
 	std::ostringstream stream;
-	std::stringstream header;
 	stream << "HTTP/1.1 301 Moved Permanently\r\n";
 	stream << "Location: " << redirection << "\r\n";
 	stream << "Content-Length: 0\r\n\r\n";
-	header << stream;
-	return header.str();
+	return stream.str();
 }
 
 
@@ -208,7 +206,6 @@ void ServerWeb::GetMethod(std::string path, const int Client, std::string &Data)
 		else
 			return this->Send(Client, 403, "text/html", this->BuildErrorPage(403));
 	}
-	std::cout << CompletePath << std::endl;
 	body = this->BuildBody(CompletePath, statuscode);
 	this->Send(Client, statuscode,this->GetContentType(CompletePath), body);
 }
@@ -281,10 +278,7 @@ void ServerWeb::PostMethod(std::string path, std::string Data, const int Client)
     const std::size_t contentEnd = Data.find(boundary, contentStart);
     if (contentEnd == std::string::npos)
 		return this->Send(Client, 400, "text/html", this->BuildErrorPage(400));
-	std::cout << path << std::endl;
-	std::cout << route->root << std::endl;
 
-	std::cout << fullpath << std::endl;
     std::ofstream of(fullpath.c_str());
 	if (!of)
 		return this->Send(Client, 500, "text/html", this->BuildErrorPage(500));
@@ -308,7 +302,7 @@ std::string ServerWeb::GetPath(std::string Line)
 
 void ServerWeb::RequestParsing(std::string Request, const int Client)
 {
-	std::cout << Request << std::endl;
+	// std::cout << Request << std::endl;
 	if (!std::strncmp(Request.c_str(), "GET", 3))
 	{
 		if(Request.find(".py") != std::string::npos || Request.find(".php") != std::string::npos)
