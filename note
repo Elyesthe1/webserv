@@ -8,10 +8,10 @@ cookie ✅
 MAX BODY A FAIRE ✅
 multiserver ✅
 Setup des routes avec une ou plusieurs des règles/configurations suivante // faire un objet conf a part fair un for dans le main ect...
-    ◦ Définir une liste de méthodes HTTP acceptées pour la route. ❌
-    ◦ Définir une redirection HTTP. ❌
-    ◦ Activer ou désactiver le listing des répertoires. ❌
-    ◦ Rendre la route capable d’accepter les fichiers téléversés et configurer où cela ❌
+    ◦ Définir une liste de méthodes HTTP acceptées pour la route. ✅
+    ◦ Définir une redirection HTTP. r ✅
+    ◦ Activer ou désactiver le listing des répertoires. ✅
+    ◦ Rendre la route capable d’accepter les fichiers téléversés et configurer où cela r ✅
     doit être enregistré.
 
 // FAIRE ATTENDION DE PAS AVOIR UN THROW POUR UNE WARNING QUI FAIT QUITTER LE PROGRAM

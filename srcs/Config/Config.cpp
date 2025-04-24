@@ -124,7 +124,7 @@ void Config::DefaultConf()
     Route images;
     images.path = "/images";
     images.root = "www/casino/uploads";
-    images.index = "logan.jpg";
+    // images.index = "logan.jpg";
     images.autoindex = true;
 
     conf.Vec_Routes.push_back(root);
