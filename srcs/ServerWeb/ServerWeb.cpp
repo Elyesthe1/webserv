@@ -76,6 +76,7 @@ std::string ServerWeb::BuildBody(std::string &FilePath, int &StatusCode)
 	if (!file)
 	{
 		StatusCode = 404;
+		FilePath = ".html";
 		return this->BuildErrorPage(404);
 	}
 	std::stringstream buffer;
@@ -124,9 +125,11 @@ std::string ServerWeb::BuildHttpResponse(int statusCode, const std::string& cont
 }
 void ServerWeb::Send(int clientFd, int statusCode, const std::string& contentType, const std::string& body)
 {
+	std::string response;
 	if (statusCode)
-		const std::string response = this->BuildHttpResponse(statusCode, contentType, body);
-	const std::string response = body;
+		response = this->BuildHttpResponse(statusCode, contentType, body);
+	else
+		response = body;
 	if (send(clientFd, response.c_str(), response.size(), 0) == -1)
 		throw std::runtime_error(std::string("send() failed: ") + strerror(errno));
 }
@@ -183,38 +186,65 @@ void ServerWeb::GetMethod(std::string path, const int Client, std::string &Data)
 {
 	int statuscode = 200;
 	std::string body;
-	const Route *route = this->config.FindRoute(path);
-	std::string CompletePath;
+	const Route *route = this->RouteCheck(path, Client, "GET");
 	if (!route)
-		return this->Send(Client, 404, "Text/html", this->BuildErrorPage(404));
+		return ;
 	if (!route->redirection.empty())
-		this->Send(Client, 0, "", this->BuildRedirectionHeader(route->redirection));
-	if (std::find(route->methods.begin(), route->methods.end(), "GET") == route->methods.end())
-		return this->Send(Client, 405, "Text/html", this->BuildErrorPage(405));
-	if (this->CookieHandler(Data))
+		return this->Send(Client, 0, "", this->BuildRedirectionHeader(route->redirection));
+
+	std::string relativePath = path.substr(route->path.length());
+	if (!relativePath.empty() && relativePath[0] == '/')
+		relativePath = relativePath.substr(1);
+	
+	std::string CompletePath = route->root + "/" + relativePath;
+	if ( !path[1] && this->CookieHandler(Data))
 		CompletePath = "www/casino/10th_visit.html";
-	else
-		CompletePath =  route->root + path;
-	if (IsDirectory(CompletePath))
+	else if (IsDirectory(CompletePath))
 	{
 		if(!route->index.empty())
-			CompletePath += "/" + route->index;
+			CompletePath = route->root + "/" + route->index;
 		else if (route->autoindex)
-			return this->Send(Client, 200, "Text/html", this->AutoIndex(CompletePath, path));
+			return this->Send(Client, 200, "text/html", this->AutoIndex(CompletePath, path));
 		else
-			return this->Send(Client, 403, "Text/html", this->BuildErrorPage(403));
-
+			return this->Send(Client, 403, "text/html", this->BuildErrorPage(403));
 	}
+	std::cout << CompletePath << std::endl;
 	body = this->BuildBody(CompletePath, statuscode);
 	this->Send(Client, statuscode,this->GetContentType(CompletePath), body);
 }
 
+const Route *ServerWeb::RouteCheck(std::string path, int const Client, const std::string method)
+{
+	const Route *route = this->config.FindRoute(path);
+	if (!route)
+	{
+		this->Send(Client, 404, "text/html", this->BuildErrorPage(404));
+		return NULL;
+	}
+	if (!route->methods.empty())
+	{
+		if (std::find(route->methods.begin(), route->methods.end(), method) == route->methods.end())
+		{
+			this->Send(Client, 405, "text/html", this->BuildErrorPage(405));
+			return NULL;
+		}
+	}
+	return route;
+}
+
+
 void ServerWeb::DeleteMethod(std::string path, const int Client)
 {
+	const Route *route = this->RouteCheck(path, Client, "DELETE");
+	if (!route)
+		return ;
+	std::string FullPath = route->root + path;
 	struct stat buffer;
-    if (stat(path.c_str(), &buffer) == -1)
+    if (stat(FullPath.c_str(), &buffer) == -1)
 		this->Send(Client, 404, "text/html", this->BuildErrorPage(404));
-	else if (std::remove(path.c_str()) != 0)
+	else if (IsDirectory(FullPath))
+		return this->Send(Client, 403, "text/html", this->BuildErrorPage(403));
+	else if (std::remove(FullPath.c_str()) != 0)
 		this->Send(Client, 403, "text/html", this->BuildErrorPage(403));
 	else
 		this->Send(Client, 204, "", "");
@@ -222,6 +252,10 @@ void ServerWeb::DeleteMethod(std::string path, const int Client)
 
 void ServerWeb::PostMethod(std::string path, std::string Data, const int Client)
 {
+	const Route *route = this->RouteCheck(path, Client, "POST");
+	if (!route)
+		return ;
+	
     const std::size_t BoundaryStart = Data.find("boundary=");
     if (BoundaryStart == std::string::npos)
         return this->Send(Client, 400, "text/html", this->BuildErrorPage(400));
@@ -236,7 +270,7 @@ void ServerWeb::PostMethod(std::string path, std::string Data, const int Client)
     const std::size_t startName = Data.find("\"", File + 9) + 1;
     const std::size_t endName = Data.find("\"", startName);
     const std::string filename = Data.substr(startName, endName - startName);
-    const std::string fullpath = path + "/" + filename;
+    const std::string fullpath = route->upload + "/" + filename;
 
     std::size_t contentStart = Data.find("\r\n\r\n", endName);
     if (contentStart == std::string::npos)
@@ -247,8 +281,11 @@ void ServerWeb::PostMethod(std::string path, std::string Data, const int Client)
     const std::size_t contentEnd = Data.find(boundary, contentStart);
     if (contentEnd == std::string::npos)
 		return this->Send(Client, 400, "text/html", this->BuildErrorPage(400));
+	std::cout << path << std::endl;
+	std::cout << route->root << std::endl;
 
-    std::ofstream of(fullpath.c_str(), std::ios::binary);
+	std::cout << fullpath << std::endl;
+    std::ofstream of(fullpath.c_str());
 	if (!of)
 		return this->Send(Client, 500, "text/html", this->BuildErrorPage(500));
     of.write(Data.c_str() + contentStart, contentEnd - contentStart - 2);
@@ -271,6 +308,7 @@ std::string ServerWeb::GetPath(std::string Line)
 
 void ServerWeb::RequestParsing(std::string Request, const int Client)
 {
+	std::cout << Request << std::endl;
 	if (!std::strncmp(Request.c_str(), "GET", 3))
 	{
 		if(Request.find(".py") != std::string::npos || Request.find(".php") != std::string::npos)
@@ -279,7 +317,7 @@ void ServerWeb::RequestParsing(std::string Request, const int Client)
 			this->GetMethod(this->GetPath(&Request[4]), Client, Request);
 	}
 	else if (!std::strncmp(Request.c_str(), "DELETE", 6))
-		this->DeleteMethod(this->config.GetRoot() + this->GetPath(&Request[7]), Client);
+		this->DeleteMethod(this->GetPath(&Request[7]), Client);
 	else if (!std::strncmp(Request.c_str(), "POST", 4))
 	{
 		if (this->CheckBodyLimit(Request))
@@ -287,7 +325,7 @@ void ServerWeb::RequestParsing(std::string Request, const int Client)
 		else if(Request.find(".py") != std::string::npos || Request.find(".php") != std::string::npos)
 			this->CGIMethod(Request, Client);
 		else
-			this->PostMethod(this->config.GetUploadPath(), Request, Client);
+			this->PostMethod(this->GetPath(&Request[5]), Request, Client);
 	}
 	else
 		this->Send(Client, 501, "text/html", this->BuildErrorPage(501));

@@ -37,6 +37,7 @@ class ServerWeb
         Socket socket;
         void RequestParsing(std::string Request, const int Client);
     private:
+        const Route *RouteCheck(std::string path, const int Client, const std::string method);
         std::string AutoIndex(const std::string& Path, const std::string& Url);
         std::string BuildErrorPage(const int status);
         std::string GetPath(std::string Line);

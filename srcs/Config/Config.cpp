@@ -52,13 +52,32 @@ void Config::Set413(const std::string path) {this->Error413Path = path;}
 
 
 void Config::SetHost(const std::string Host) {this->host = Host;}
+
 const Route* Config::FindRoute(const std::string& path) const
 {
-    for(std::size_t i = 0; i < this->Vec_Routes.size(); i++)
-        if (this->Vec_Routes[i].path == path)
-            return &this->Vec_Routes[i];
-    return NULL;
+    const Route* route = NULL;
+    std::size_t len = 0;
+
+    for (std::size_t i = 0; i < this->Vec_Routes.size(); ++i)
+    {
+        const std::string& routePath = this->Vec_Routes[i].path;
+        std::size_t routeLen = routePath.size();
+
+        if (!std::strncmp(routePath.c_str(), path.c_str(), routeLen))
+        {
+            if (routePath != "/" && path.size() > routeLen && path[routeLen] != '/')
+                continue;
+            if (routeLen > len)
+            {
+                len = routeLen;
+                route = &this->Vec_Routes[i];
+            }
+        }
+    }
+
+    return route;
 }
+
 
 void Config::DefaultConf()
 {
@@ -82,12 +101,15 @@ void Config::DefaultConf()
     root.autoindex = false;
     root.methods.push_back("GET");
     root.methods.push_back("POST");
+    root.methods.push_back("DELETE");
 
     Route uploads;
-    uploads.path = "/uploads";
+    uploads.path = "/upload";
     uploads.root = "www/casino/uploads";
     uploads.upload = "www/casino/uploads";
     uploads.methods.push_back("POST");
+
+    
 
     Route redirect;
     redirect.path = "/redirect";
@@ -102,7 +124,7 @@ void Config::DefaultConf()
     Route images;
     images.path = "/images";
     images.root = "www/casino/uploads";
-    images.index = "default.jpg";
+    images.index = "logan.jpg";
     images.autoindex = true;
 
     conf.Vec_Routes.push_back(root);
@@ -116,7 +138,7 @@ void Config::DefaultConf()
 
 void Config::OpenFile(int ac, char **av)
 {
-    if (ac != 2)
+    if (ac > 2)
         throw std::runtime_error("❌ Invalid number of arguments: expected './webserv <config_file>'");
     if (ac == 2)
     { 

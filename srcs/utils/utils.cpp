@@ -2,17 +2,19 @@
 #include <fcntl.h>
 #include <string.h>
 #include "../../includes/Logger.hpp"
+#include <sys/types.h>
+#include <sys/stat.h>
+
+#include <sys/stat.h>
 
 bool IsDirectory(const std::string& path)
 {
     struct stat s;
-    if (stat(path.c_str(), &s) == 0)
-    {
-        return S_ISDIR(s.st_mode);
-    }
-    return false;
-}
+    if (stat(path.c_str(), &s) != 0)
+        return false;  // chemin invalide ou inaccessible
 
+    return S_ISDIR(s.st_mode);  // vrai si c’est un dossier
+}
 
 const std::string intTostring(const int n)
 {

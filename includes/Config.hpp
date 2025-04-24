@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <vector>
 #include "Route.hpp"
+#include <cstring>
 const std::string intTostring(const int n);
 
 class Config

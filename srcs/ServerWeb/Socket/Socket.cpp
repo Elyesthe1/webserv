@@ -9,11 +9,11 @@ void Socket::InitSocket(const Config &config)
     this->CreateSocket();
     SetNonBlocking(this->socketFD);
     this->SetSocketOp();
-    for(int i = 0; i < config.Vec_address_size(); i++)
+    for(int i = 0; i < config.address_size(); i++)
         this->BindSocket(config, i);
     this->Listen();
-    for(int i = 0; i < config.Vec_address_size(); i++)
-        Logger::InfoLog("Socket", "✅ Server is listening on socket " + intTostring(this->socketFD) + " at port " + intTostring(config.Getports(i)));
+    for(int i = 0; i < config.address_size(); i++)
+        Logger::InfoLog("Socket", "✅ Server is listening on socket " + intTostring(this->socketFD) + " at port " + intTostring(config.GetPorts(i)));
 }
 
 void Socket::Listen() const
