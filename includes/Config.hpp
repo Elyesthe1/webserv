@@ -22,8 +22,6 @@ class Config
         const struct sockaddr_in& Getaddr(const int i) const ;
         int GetPorts(const int i) const;
         int GetVec_RoutesSize()const ;
-        // std::string GetRoot() const;
-        // std::string GetIndex() const ;
         int GetMaxBody() const;
         Config GetConfig(const int i) const;
         static int size();
@@ -55,9 +53,6 @@ class Config
         static int How_Much_Server;
         std::vector<Config> Vec_Conf;
         long long  MaxBody;
-        // std::string UploadPath;
-        // std::string index;
-        // std::string root;
         std::vector<int> Vec_ports;
         std::vector<struct sockaddr_in> Vec_address;
         std::vector<Route> Vec_Routes;

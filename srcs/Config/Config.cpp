@@ -60,21 +60,17 @@ const Route* Config::FindRoute(const std::string& path) const
 
     for (std::size_t i = 0; i < this->Vec_Routes.size(); ++i)
     {
-        const std::string& routePath = this->Vec_Routes[i].path;
-        std::size_t routeLen = routePath.size();
-
-        if (!std::strncmp(routePath.c_str(), path.c_str(), routeLen))
+        if (!std::strncmp(this->Vec_Routes[i].path.c_str(), path.c_str(), this->Vec_Routes[i].path.size()))
         {
-            if (routePath != "/" && path.size() > routeLen && path[routeLen] != '/')
+            if (this->Vec_Routes[i].path != "/" && path.size() > this->Vec_Routes[i].path.size() && path[this->Vec_Routes[i].path.size()] != '/')
                 continue;
-            if (routeLen > len)
+            if (this->Vec_Routes[i].path.size() > len)
             {
-                len = routeLen;
+                len = this->Vec_Routes[i].path.size();
                 route = &this->Vec_Routes[i];
             }
         }
     }
-
     return route;
 }
 
@@ -124,8 +120,7 @@ void Config::DefaultConf()
     Route images;
     images.path = "/images";
     images.root = "www/casino/uploads";
-    // images.index = "logan.jpg";
-    images.autoindex = true;
+    images.index = "logan.jpg";
 
     conf.Vec_Routes.push_back(root);
     conf.Vec_Routes.push_back(uploads);
