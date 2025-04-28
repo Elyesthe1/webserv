@@ -112,8 +112,8 @@ void Config::DefaultConf()
     redirect.redirection = "https://www.google.com";
 
     Route cgi;
-    cgi.path = "/cgi-bin/";
-    cgi.root = "/var/www/cgi-bin";
+    cgi.path = "/cgi-bin";
+    cgi.root = "/www/casino/cgi";
     cgi.methods.push_back("GET");
     cgi.methods.push_back("POST");
 

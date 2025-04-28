@@ -287,9 +287,100 @@ void ServerWeb::PostMethod(std::string path, std::string Data, const int Client)
 	this->Send(Client, 204, "", "");
 }
 
+// GET CGI
 void ServerWeb::CGIMethod(std::string Data, const int Client)
 {
 	const std::string exec = Data.find(".py") != std::string::npos ? "/usr/bin/python3" : "/usr/bin/php-cgi";
+	const Route *route = this->RouteCheck(this->GetPath(&Data[4]), Client, "GET");
+
+	if (!route)
+		return Logger::WarningLog("CGI", "no route found");
+
+	std::string cgi_file_path = "." + route->root + this->GetPath(&Data[4]).substr(route->path.length());
+	std::string form_data = cgi_file_path.substr(cgi_file_path.find("?") + 1);
+	cgi_file_path = cgi_file_path.substr(0, cgi_file_path.find("?"));
+
+
+	// std::cout << route->root << std::endl;
+	// std::cout << route->path << std::endl;
+	// std::cout << "path: " << this->GetPath(&Data[4]).substr(route->path.length()) << std::endl;
+	// std::cout << "path: " << (route->root + this->GetPath(&Data[4]).substr(route->path.length())) << std::endl;
+
+	std::cout << "cgi_file_path: " << cgi_file_path << std::endl;
+	std::cout << "form_data: " << form_data << std::endl;
+
+	std::ifstream file(cgi_file_path.c_str());
+	if (!file)
+	{
+		std::cerr << "file not found" << std::endl;
+		return this->Send(Client, 404, "text/html", this->BuildErrorPage(404));
+	}
+	int pipes[2];
+	if (pipe(pipes) == -1)
+	{
+		Logger::ErrorLog("CGI", "pipes failed");
+		return this->Send(Client, 500, "text/html", this->BuildErrorPage(500));
+	}
+
+	pid_t pid = fork();
+	if (pid == -1)
+	{
+		close(pipes[0]);
+		close(pipes[1]);
+		Logger::ErrorLog("CGI", "fork failed");
+		return this->Send(Client, 500, "text/html", this->BuildErrorPage(500));
+	} 
+	else if (pid == 0)
+	{
+		char *argv[3];
+		char *envp[4];
+
+		// this->Send(Client, 200, "text/html", "<p>lol</p>");
+
+		argv[0] = new char[exec.size() + 1];
+		argv[1] = new char[cgi_file_path.size() + 1];
+		std::strcpy(argv[0], exec.c_str());
+		std::strcpy(argv[1], cgi_file_path.c_str());
+		argv[2] = NULL;
+
+		envp[0] = new char[std::strlen("CONTENT_TYPE=application/x-www-form-urlencoded") + 1];
+		envp[1] = new char[std::strlen("QUERY_STRING=") + form_data.size() + 1];
+		std::strcpy(envp[0], "CONTENT_TYPE=application/x-www-form-urlencoded");
+		std::strcpy(envp[1], "QUERY_STRING=");
+		std::strcat(envp[1], form_data.c_str());
+		envp[2] = NULL;
+	
+		std::cout << "envp[0] = " << envp[0] << std::endl;
+		std::cout << "envp[1] = " << envp[1] << std::endl;
+
+		std::cout << "argv[0] = " << argv[0] << std::endl;
+		
+		close(pipes[0]);
+		dup2(pipes[1], STDOUT_FILENO);
+		close(pipes[1]);
+		execve(exec.c_str(), argv, envp);
+		exit(0);
+		// ServManager::running = 0;
+		// exit(0);
+	}
+	else 
+	{
+
+		char buffer[10 + 1] = {0};
+		std::string data;
+		close(pipes[1]);
+		waitpid(pid, NULL, 0);
+
+		while (read(pipes[0], &buffer, 10) != 0)
+		{
+			// std::cout << "buffer:" << buffer << std::endl;
+			data.append(buffer);
+			std::fill_n(buffer, 10, 0);
+		}
+		std::cout << data << std::endl;
+		close(pipes[0]);
+		this->Send(Client, 200, "text/html", data);
+	}
 }
 
 std::string ServerWeb::GetPath(std::string Line)
@@ -302,7 +393,7 @@ std::string ServerWeb::GetPath(std::string Line)
 
 void ServerWeb::RequestParsing(std::string Request, const int Client)
 {
-	// std::cout << Request << std::endl;
+	std::cout << Request << std::endl;
 	if (!std::strncmp(Request.c_str(), "GET", 3))
 	{
 		if(Request.find(".py") != std::string::npos || Request.find(".php") != std::string::npos)

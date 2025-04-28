@@ -5,9 +5,14 @@
 const std::string intTostring(const int n);
 void SetNonBlocking(const int fd);
 
+class ServerWeb;
+
 class ServManager
 {
     public:
+        static int running;
+
+
         ServManager(const Config &conf);
         ~ServManager();
         void run();
@@ -16,7 +21,6 @@ class ServManager
         std::map<std::string, ServerWeb*> Map_Host_Server;
         std::map<int, ServerWeb*> Map_Fd_Server;
         const Config conf;
-        static int running;
         struct epoll_event events[1024];
         int epoll;
 

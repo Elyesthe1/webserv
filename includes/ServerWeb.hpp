@@ -16,6 +16,9 @@
 #include <algorithm>
 #include <sys/types.h>
 #include <dirent.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include "ServManager.hpp"
 #define READ_BUFFER 4096
 #define NOT_FOUND_404 "<html><body><h1>404 Not Found</h1><p>Page introuvable</p></body></html>"
 #define BodyTooLarge "<html><head><meta charset=\"UTF-8\"><title>413 Payload Too Large</title></head><body><h1>413 - Payload Too Large</h1><p>Le corps de la requête dépasse la taille autorisée.</p></body></html>"
@@ -24,6 +27,8 @@
 #define BAD_REQUEST_400 "<html><body><h1>400 - Bad Request</h1><p>Votre requête est invalide.</p></body></html>"
 #define METHOD_NOT_ALLOWED "<html><body><h1>🚫 Erreur 405</h1><p>La méthode HTTP utilisée n'est pas autorisée pour cette ressource.</p></body></html>"
 #define NOT_IMPLEMENTED "<html><body><h1>🛠️ Erreur 501</h1><p>La méthode HTTP utilisée n'est pas reconnue ou non prise en charge par ce serveur.</p></body></html>"
+
+
 
 
 const std::string intTostring(const int n);
