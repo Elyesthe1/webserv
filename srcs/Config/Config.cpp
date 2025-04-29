@@ -113,7 +113,7 @@ void Config::DefaultConf()
 
     Route cgi;
     cgi.path = "/cgi-bin";
-    cgi.root = "/www/casino/cgi";
+    cgi.root = "www/casino/cgi";
     cgi.methods.push_back("GET");
     cgi.methods.push_back("POST");
 
