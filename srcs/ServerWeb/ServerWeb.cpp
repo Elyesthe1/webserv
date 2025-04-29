@@ -343,17 +343,24 @@ char **ServerWeb::build_cgi_argv(std::string cgi_executable, std::string cgi_fil
 	return (argv);
 }
 
-char **ServerWeb::build_cgi_get_envp(std::string query_string)
+char **ServerWeb::build_cgi_get_envp(std::string cgi_file_path, std::string query_string)
 {
-	char **envp = new char*[3];
+	char **envp = new char*[6];
 
 	envp[0] = new char[std::strlen("CONTENT_TYPE=application/x-www-form-urlencoded") + 1];
 	envp[1] = new char[std::strlen("QUERY_STRING=") + query_string.length() + 1];
+	envp[2] = new char[std::strlen("REQUEST_METHOD=GET") + 1];
+	envp[3] = new char[std::strlen("REDIRECT_STATUS=200") + 1];
+	envp[4] = new char[std::strlen("SCRIPT_FILENAME=") + cgi_file_path.length() + 1];
 
 	std::strcpy(envp[0], "CONTENT_TYPE=application/x-www-form-urlencoded");
 	std::strcpy(envp[1], "QUERY_STRING=");
 	std::strcat(envp[1], query_string.c_str());
-	envp[2] = NULL;
+	std::strcpy(envp[2], "REQUEST_METHOD=GET");
+	std::strcpy(envp[3], "REDIRECT_STATUS=200");
+	std::strcpy(envp[4], "SCRIPT_FILENAME=");
+	std::strcat(envp[4], cgi_file_path.c_str());
+	envp[5] = NULL;
 
 	return (envp);
 }
@@ -392,7 +399,7 @@ void ServerWeb::CGI_GET(const int client, std::string data)
 	else if (pid == 0)
 	{
 		char **argv = build_cgi_argv(cgi_executable, cgi_file_path);
-		char **envp = build_cgi_get_envp(query_string);
+		char **envp = build_cgi_get_envp(cgi_file_path, query_string);
 
 		close(pipefd[0]);
 		dup2(pipefd[1], STDOUT_FILENO);
@@ -406,6 +413,8 @@ void ServerWeb::CGI_GET(const int client, std::string data)
 			delete[] argv;
 			delete[] envp[0];
 			delete[] envp[1];
+			delete[] envp[2];
+			delete[] envp[3];
 			delete[] envp;
 			exit(1);
 		}
