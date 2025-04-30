@@ -3,6 +3,8 @@
 import os
 import cgi
 
+print("Content-Type: text/html")
+print("")
 print("<html><body>")
 print("<h2>Hello from CGI</h2>")
 

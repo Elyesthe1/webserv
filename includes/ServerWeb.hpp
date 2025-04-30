@@ -31,6 +31,7 @@
 
 const std::string intTostring(const int n);
 bool IsDirectory(const std::string& path);
+char to_lower(char c);
 
 class ServerWeb
 {
@@ -62,4 +63,6 @@ class ServerWeb
         std::string get_query_string(std::string data);
         char **build_cgi_argv(std::string cgi_executable, std::string cgi_file_path);
         char **build_cgi_get_envp(std::string cgi_file_path, std::string query_string);
+        std::string get_cgi_content_type(std::string data);
+        std::string get_cgi_body(std::string data);
 };

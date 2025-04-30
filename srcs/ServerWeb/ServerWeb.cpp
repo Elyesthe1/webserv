@@ -365,6 +365,44 @@ char **ServerWeb::build_cgi_get_envp(std::string cgi_file_path, std::string quer
 	return (envp);
 }
 
+std::string	ServerWeb::get_cgi_content_type(std::string data)
+{
+	std::string first_line = data.substr(0, data.find('\n'));
+	std::string	content_type;
+
+	std::transform(first_line.begin(), first_line.end(), first_line.begin(), to_lower);
+	if (first_line.find("content-type:") == std::string::npos)
+		return ("text/html");
+	
+	content_type = data.substr(0, data.find('\n'));
+	content_type = content_type.substr(first_line.find("content-type:"));
+	content_type = content_type.substr(std::strlen("content-type:"));
+
+	int i = 0;
+	while (content_type[i] && content_type[i] == ' ')
+		++i;
+	content_type = content_type.substr(i);
+
+	return (content_type);
+}
+
+std::string ServerWeb::get_cgi_body(std::string data)
+{
+	std::string first_line = data.substr(0, data.find('\n'));
+	std::string body = data;
+
+	std::transform(first_line.begin(), first_line.end(), first_line.begin(), to_lower);
+	if (first_line.find("content-type:") != std::string::npos)
+		body = body.substr(std::strlen(first_line.c_str()));
+
+	int i = 0;
+	while (body[i] && body[i] == '\n')
+		++i;
+	
+	body = body.substr(i);
+	return (body);
+}
+
 // parse the "content-type" from the cgi response
 void ServerWeb::CGI_GET(const int client, std::string data)
 {
@@ -438,11 +476,10 @@ void ServerWeb::CGI_GET(const int client, std::string data)
 			data += buffer;
 			std::fill_n(buffer, 10, 0);
 		}
-
 		close(pipefd[0]);
-		this->Send(client, 200, "text/html", data);
-	}
 
+		this->Send(client, 200, get_cgi_content_type(data), get_cgi_body(data));
+	}
 }
 
 std::string ServerWeb::GetPath(std::string Line)

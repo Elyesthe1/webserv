@@ -37,3 +37,8 @@ void SetNonBlocking(const int fd)
         return ;
     }
 }
+
+char to_lower(char c)
+{
+    return (static_cast<char>(std::tolower(static_cast<unsigned char>(c))));
+}
