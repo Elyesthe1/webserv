@@ -105,8 +105,6 @@ void Config::DefaultConf()
     uploads.upload = "www/casino/uploads";
     uploads.methods.push_back("POST");
 
-    
-
     Route redirect;
     redirect.path = "/redirect";
     redirect.redirection = "https://www.google.com";

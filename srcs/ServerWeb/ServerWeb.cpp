@@ -287,21 +287,13 @@ void ServerWeb::PostMethod(std::string path, std::string Data, const int Client)
 	this->Send(Client, 204, "", "");
 }
 
-
-// std::string ServerWeb::GetPath(std::string Line)
-// { 
-// 	const std::size_t pos = Line.find(' ', 0);
-// 	if (pos == std::string::npos)
-// 		return "/";
-// 	return Line.substr(0, pos);
-// }
-
 std::string ServerWeb::get_cgi_file_path(const Route *route, std::string data)
 {
 	std::string file_name;
 	std::string cgi_file_path;
+	int i = (data.rfind("GET", 0) == 0) ? 4 : 5;
 
-	file_name =	this->GetPath(&data[4]).substr(route->path.length());
+	file_name =	this->GetPath(&data[i]).substr(route->path.length());
 	if (file_name.find('/') != std::string::npos)
 		file_name = file_name.substr(1);
 
@@ -322,8 +314,9 @@ std::string ServerWeb::get_query_string(std::string data)
 		return ("");
 
 	std::string query_string;
+	int i = (data.rfind("GET", 0) == 0) ? 4 : 5;
 
-	query_string = this->GetPath(&data[4]);
+	query_string = this->GetPath(&data[i]);
 	query_string = query_string.substr(query_string.find("?") + 1);
 
 	return (query_string);
@@ -361,6 +354,34 @@ char **ServerWeb::build_cgi_get_envp(std::string cgi_file_path, std::string quer
 	std::strcpy(envp[4], "SCRIPT_FILENAME=");
 	std::strcat(envp[4], cgi_file_path.c_str());
 	envp[5] = NULL;
+
+	return (envp);
+}
+
+
+char **ServerWeb::build_cgi_post_envp(std::string cgi_file_path, std::string query_string, std::string post_data)
+{
+	char **envp = new char*[7];
+
+	envp[0] = new char[std::strlen("CONTENT_TYPE=application/x-www-form-urlencoded") + 1];
+	envp[1] = new char[std::strlen("QUERY_STRING=") + query_string.length() + 1];
+	envp[2] = new char[std::strlen("REQUEST_METHOD=POST") + 1];
+	envp[3] = new char[std::strlen("REDIRECT_STATUS=200") + 1];
+	envp[4] = new char[std::strlen("SCRIPT_FILENAME=") + cgi_file_path.length() + 1];
+	envp[5] = new char[std::strlen("CONTENT_LENGTH=") + std::strlen(ft_itoa(std::strlen(post_data.c_str()))) + 1];
+
+	std::strcpy(envp[0], "CONTENT_TYPE=application/x-www-form-urlencoded");
+	std::strcpy(envp[1], "QUERY_STRING=");
+	std::strcat(envp[1], query_string.c_str());
+	std::strcpy(envp[2], "REQUEST_METHOD=POST");
+	std::strcpy(envp[3], "REDIRECT_STATUS=200");
+	std::strcpy(envp[4], "SCRIPT_FILENAME=");
+	std::strcat(envp[4], cgi_file_path.c_str());
+	std::strcpy(envp[5], "CONTENT_LENGTH=");
+	std::strcat(envp[5], ft_itoa(std::strlen(post_data.c_str())));
+
+	std::cerr << envp[5] << std::endl;
+	envp[6] = NULL;
 
 	return (envp);
 }
@@ -403,7 +424,6 @@ std::string ServerWeb::get_cgi_body(std::string data)
 	return (body);
 }
 
-// parse the "content-type" from the cgi response
 void ServerWeb::CGI_GET(const int client, std::string data)
 {
 	const std::string cgi_executable = (data.find(".py") != std::string::npos) ? "/usr/bin/python3" : "/usr/bin/php-cgi";
@@ -477,10 +497,117 @@ void ServerWeb::CGI_GET(const int client, std::string data)
 			std::fill_n(buffer, 10, 0);
 		}
 		close(pipefd[0]);
+		this->Send(client, 200, get_cgi_content_type(data), get_cgi_body(data));
+	}
+}
+
+std::string ServerWeb::get_cgi_post_data(std::string data)
+{
+	std::string post_data = data.substr(data.find("\r\n\r\n") + std::strlen("\r\n\r\n"));
+
+	return (post_data);
+}
+
+void ServerWeb::CGI_POST(const int client, std::string data)
+{
+	const std::string cgi_executable = (data.find(".py") != std::string::npos) ? "/usr/bin/python3" : "/usr/bin/php-cgi";
+	const Route *route = this->RouteCheck(this->GetPath(&data[5]), client, "POST");
+
+	if (!route)
+		return Logger::InfoLog("CGI", "no route found");
+
+	std::string cgi_file_path = this->get_cgi_file_path(route, data);
+	std::string query_string = this->get_query_string(data);
+	std::string post_data = this->get_cgi_post_data(data);
+
+	std::ifstream file(cgi_file_path.c_str());
+	if (!file)
+		return this->Send(client, 404, "text/html", this->BuildErrorPage(404));
+
+	int in[2];
+	int out[2];
+	if (pipe(in) == -1)
+	{
+		Logger::ErrorLog("CGI", "pipe creation failed");
+		return this->Send(client, 500, "text/html", this->BuildErrorPage(500));
+	}
+
+	if (pipe(out) == -1)
+	{
+		close(in[0]);
+		close(in[1]);
+		Logger::ErrorLog("CGI", "pipe creation failed");
+		return this->Send(client, 500, "text/html", this->BuildErrorPage(500));
+	}
+
+	pid_t pid = fork();
+	if (pid == -1)
+	{
+		close(in[0]);
+		close(in[1]);
+		close(out[0]);
+		close(out[1]);
+		Logger::ErrorLog("CGI", "fork creation failed");
+		return this->Send(client, 500, "text/html", this->BuildErrorPage(500));
+	}
+	else if (pid == 0)
+	{
+		char **argv = build_cgi_argv(cgi_executable, cgi_file_path);
+		char **envp = build_cgi_post_envp(cgi_file_path, query_string, post_data);
+
+		dup2(in[0], STDIN_FILENO);
+		close(in[0]);
+		close(in[1]);
+
+		dup2(out[1], STDOUT_FILENO);
+		close(out[0]);
+		close(out[1]);
+
+		if (execve(cgi_executable.c_str(), argv, envp) == -1)
+		{
+			Logger::ErrorLog("CGI", "execve failed");
+			delete[] argv[0];
+			delete[] argv[1];
+			delete[] argv;
+			delete[] envp[0];
+			delete[] envp[1];
+			delete[] envp[2];
+			delete[] envp[3];
+			delete[] envp;
+			exit(1);
+		}
+		std::cerr << " ok" << std::endl;
+	}
+	else
+	{
+		int exit_status;
+
+		close(in[0]);
+		close(out[1]);
+
+		write(in[1], post_data.c_str(), post_data.length());
+		close(in[1]);
+		waitpid(pid, &exit_status, 0);
+		if (WEXITSTATUS(exit_status) == 1)
+		{
+			close(out[0]);
+			return this->Send(client, 500, "text/html", this->BuildErrorPage(500));
+		}
+
+		std::string data;
+		char buffer[10 + 1] = {0};
+		while (read(out[0], &buffer, 10) != 0)
+		{
+			data += buffer;
+			std::fill_n(buffer, 10, 0);
+		}
+		close(out[0]);
+		std::cout << "data: " << data << std::endl;
 
 		this->Send(client, 200, get_cgi_content_type(data), get_cgi_body(data));
 	}
 }
+
 
 std::string ServerWeb::GetPath(std::string Line)
 { 
@@ -507,7 +634,7 @@ void ServerWeb::RequestParsing(std::string Request, const int Client)
 		if (this->CheckBodyLimit(Request))
 			return this->Send(Client, 413, "text/html", this->BuildErrorPage(413));
 		else if(Request.find(".py") != std::string::npos || Request.find(".php") != std::string::npos)
-			this->CGI_GET(Client, Request);
+			this->CGI_POST(Client, Request);
 		else
 			this->PostMethod(this->GetPath(&Request[5]), Request, Client);
 	}

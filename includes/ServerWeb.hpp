@@ -29,9 +29,10 @@
 #define METHOD_NOT_ALLOWED "<html><body><h1>🚫 Erreur 405</h1><p>La méthode HTTP utilisée n'est pas autorisée pour cette ressource.</p></body></html>"
 #define NOT_IMPLEMENTED "<html><body><h1>🛠️ Erreur 501</h1><p>La méthode HTTP utilisée n'est pas reconnue ou non prise en charge par ce serveur.</p></body></html>"
 
-const std::string intTostring(const int n);
-bool IsDirectory(const std::string& path);
-char to_lower(char c);
+const   std::string intTostring(const int n);
+bool    IsDirectory(const std::string& path);
+char    to_lower(char c);
+char    *ft_itoa(int n);
 
 class ServerWeb
 {
@@ -59,10 +60,13 @@ class ServerWeb
         int  IsRequestComplete(const std::string& request);
         bool CookieHandler(std::string &Data);
         void CGI_GET(const int client, std::string data);
+        void CGI_POST(const int client, std::string data);
         std::string get_cgi_file_path(const Route *route, std::string data);
         std::string get_query_string(std::string data);
         char **build_cgi_argv(std::string cgi_executable, std::string cgi_file_path);
         char **build_cgi_get_envp(std::string cgi_file_path, std::string query_string);
         std::string get_cgi_content_type(std::string data);
         std::string get_cgi_body(std::string data);
+        std::string get_cgi_post_data(std::string data);
+        char **build_cgi_post_envp(std::string cgi_file_path, std::string query_string, std::string post_data);
 };

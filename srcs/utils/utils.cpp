@@ -4,7 +4,8 @@
 #include "../../includes/Logger.hpp"
 #include <sys/types.h>
 #include <sys/stat.h>
-
+#include <limits.h>
+#include <stdlib.h> 
 #include <sys/stat.h>
 
 bool IsDirectory(const std::string& path)
@@ -41,4 +42,69 @@ void SetNonBlocking(const int fd)
 char to_lower(char c)
 {
     return (static_cast<char>(std::tolower(static_cast<unsigned char>(c))));
+}
+
+static int	nbrlen(int n)
+{
+	int	i;
+
+	i = 0;
+	if (n <= 0)
+		++i;
+	while (n)
+	{
+		n /= 10;
+		++i;
+	}
+	return (i);
+}
+
+void	*ft_memset(void *b, int c, size_t len)
+{
+	size_t			i;
+
+	i = 0;
+	while (i < len)
+	{
+		((unsigned char *) b)[i] = (unsigned char) c;
+		++i;
+	}
+	return (b);
+}
+
+void	*ft_calloc(size_t count, size_t size)
+{
+	void	*mem;
+
+	if (count != 0 && (count * size) / count != size)
+		return (NULL);
+	mem = malloc(size * count);
+	if (!mem)
+		return (NULL);
+	ft_memset(mem, 0, size * count);
+	return (mem);
+}
+
+char	*ft_itoa(int n)
+{
+	int		len;
+	char	*number;
+
+	if (n == INT_MIN)
+		return (strdup("-2147483648"));
+	len = nbrlen(n);
+	number = (char *) ft_calloc(len + 1, sizeof(char));
+	if (!number)
+		return (NULL);
+	if (n < 0)
+	{
+		number[0] = '-';
+		n = -n;
+	}
+	while (len && number[--len] != '-')
+	{
+		number[len] = (n % 10) + '0';
+		n /= 10;
+	}
+	return (number);
 }
