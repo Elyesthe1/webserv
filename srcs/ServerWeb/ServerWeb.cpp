@@ -362,13 +362,14 @@ char **ServerWeb::build_cgi_get_envp(std::string cgi_file_path, std::string quer
 char **ServerWeb::build_cgi_post_envp(std::string cgi_file_path, std::string query_string, std::string post_data)
 {
 	char **envp = new char*[7];
+	char *itoa = ft_itoa(post_data.length());
 
 	envp[0] = new char[std::strlen("CONTENT_TYPE=application/x-www-form-urlencoded") + 1];
 	envp[1] = new char[std::strlen("QUERY_STRING=") + query_string.length() + 1];
 	envp[2] = new char[std::strlen("REQUEST_METHOD=POST") + 1];
 	envp[3] = new char[std::strlen("REDIRECT_STATUS=200") + 1];
 	envp[4] = new char[std::strlen("SCRIPT_FILENAME=") + cgi_file_path.length() + 1];
-	envp[5] = new char[std::strlen("CONTENT_LENGTH=") + std::strlen(ft_itoa(std::strlen(post_data.c_str()))) + 1];
+	envp[5] = new char[std::strlen("CONTENT_LENGTH=") + std::strlen(itoa) + 1];
 
 	std::strcpy(envp[0], "CONTENT_TYPE=application/x-www-form-urlencoded");
 	std::strcpy(envp[1], "QUERY_STRING=");
@@ -378,11 +379,10 @@ char **ServerWeb::build_cgi_post_envp(std::string cgi_file_path, std::string que
 	std::strcpy(envp[4], "SCRIPT_FILENAME=");
 	std::strcat(envp[4], cgi_file_path.c_str());
 	std::strcpy(envp[5], "CONTENT_LENGTH=");
-	std::strcat(envp[5], ft_itoa(std::strlen(post_data.c_str())));
-
-	std::cerr << envp[5] << std::endl;
+	std::strcat(envp[5], itoa);
 	envp[6] = NULL;
 
+	free(itoa);
 	return (envp);
 }
 
@@ -437,13 +437,13 @@ void ServerWeb::CGI_GET(const int client, std::string data)
 
 	std::ifstream file(cgi_file_path.c_str());
 	if (!file)
-		return this->Send(client, 404, "text/html", this->BuildErrorPage(404));
+		return (this->Send(client, 404, "text/html", this->BuildErrorPage(404)));
 
 	int pipefd[2];
 	if (pipe(pipefd) == -1)
 	{
 		Logger::ErrorLog("CGI", "pipe creation failed");
-		return this->Send(client, 500, "text/html", this->BuildErrorPage(500));
+		return (this->Send(client, 500, "text/html", this->BuildErrorPage(500)));
 	}
 
 	pid_t pid = fork();
@@ -452,7 +452,7 @@ void ServerWeb::CGI_GET(const int client, std::string data)
 		close(pipefd[0]);
 		close(pipefd[1]);
 		Logger::ErrorLog("CGI", "fork creation failed");
-		return this->Send(client, 500, "text/html", this->BuildErrorPage(500));
+		return (this->Send(client, 500, "text/html", this->BuildErrorPage(500)));
 	}
 	else if (pid == 0)
 	{
@@ -473,6 +473,7 @@ void ServerWeb::CGI_GET(const int client, std::string data)
 			delete[] envp[1];
 			delete[] envp[2];
 			delete[] envp[3];
+			delete[] envp[4];
 			delete[] envp;
 			exit(1);
 		}
@@ -482,12 +483,6 @@ void ServerWeb::CGI_GET(const int client, std::string data)
 		int exit_status;
 
 		close(pipefd[1]);
-		waitpid(pid, &exit_status, 0);
-		if (WEXITSTATUS(exit_status) == 1)
-		{
-			close(pipefd[0]);
-			return this->Send(client, 500, "text/html", this->BuildErrorPage(500));
-		}
 
 		std::string data;
 		char buffer[10 + 1] = {0};
@@ -497,7 +492,12 @@ void ServerWeb::CGI_GET(const int client, std::string data)
 			std::fill_n(buffer, 10, 0);
 		}
 		close(pipefd[0]);
-		this->Send(client, 200, get_cgi_content_type(data), get_cgi_body(data));
+		
+		waitpid(pid, &exit_status, 0);
+		if (WEXITSTATUS(exit_status) == 1)
+			return (this->Send(client, 500, "text/html", this->BuildErrorPage(500)));
+
+		return (this->Send(client, 200, get_cgi_content_type(data), get_cgi_body(data)));
 	}
 }
 
@@ -511,33 +511,32 @@ std::string ServerWeb::get_cgi_post_data(std::string data)
 void ServerWeb::CGI_POST(const int client, std::string data)
 {
 	const std::string cgi_executable = (data.find(".py") != std::string::npos) ? "/usr/bin/python3" : "/usr/bin/php-cgi";
-	const Route *route = this->RouteCheck(this->GetPath(&data[5]), client, "POST");
+	const Route *route = RouteCheck(GetPath(&data[5]), client, "POST");
 
 	if (!route)
 		return Logger::InfoLog("CGI", "no route found");
 
-	std::string cgi_file_path = this->get_cgi_file_path(route, data);
-	std::string query_string = this->get_query_string(data);
-	std::string post_data = this->get_cgi_post_data(data);
+	std::string cgi_file_path = get_cgi_file_path(route, data);
+	std::string query_string = get_query_string(data);
+	std::string post_data = get_cgi_post_data(data);
 
 	std::ifstream file(cgi_file_path.c_str());
 	if (!file)
-		return this->Send(client, 404, "text/html", this->BuildErrorPage(404));
+ 		return (this->Send(client, 404, "text/html", BuildErrorPage(404)));
 
 	int in[2];
 	int out[2];
 	if (pipe(in) == -1)
 	{
-		Logger::ErrorLog("CGI", "pipe creation failed");
+		Logger::ErrorLog("CGI", "in pipe creation failed");
 		return this->Send(client, 500, "text/html", this->BuildErrorPage(500));
 	}
-
 	if (pipe(out) == -1)
 	{
 		close(in[0]);
 		close(in[1]);
 		Logger::ErrorLog("CGI", "pipe creation failed");
-		return this->Send(client, 500, "text/html", this->BuildErrorPage(500));
+		return (this->Send(client, 500, "text/html", this->BuildErrorPage(500)));
 	}
 
 	pid_t pid = fork();
@@ -548,7 +547,7 @@ void ServerWeb::CGI_POST(const int client, std::string data)
 		close(out[0]);
 		close(out[1]);
 		Logger::ErrorLog("CGI", "fork creation failed");
-		return this->Send(client, 500, "text/html", this->BuildErrorPage(500));
+		return (this->Send(client, 500, "text/html", this->BuildErrorPage(500)));
 	}
 	else if (pid == 0)
 	{
@@ -573,10 +572,11 @@ void ServerWeb::CGI_POST(const int client, std::string data)
 			delete[] envp[1];
 			delete[] envp[2];
 			delete[] envp[3];
+			delete[] envp[4];
+			delete[] envp[5];
 			delete[] envp;
 			exit(1);
 		}
-		std::cerr << " ok" << std::endl;
 	}
 	else
 	{
@@ -587,12 +587,6 @@ void ServerWeb::CGI_POST(const int client, std::string data)
 
 		write(in[1], post_data.c_str(), post_data.length());
 		close(in[1]);
-		waitpid(pid, &exit_status, 0);
-		if (WEXITSTATUS(exit_status) == 1)
-		{
-			close(out[0]);
-			return this->Send(client, 500, "text/html", this->BuildErrorPage(500));
-		}
 
 		std::string data;
 		char buffer[10 + 1] = {0};
@@ -602,12 +596,14 @@ void ServerWeb::CGI_POST(const int client, std::string data)
 			std::fill_n(buffer, 10, 0);
 		}
 		close(out[0]);
-		std::cout << "data: " << data << std::endl;
 
-		this->Send(client, 200, get_cgi_content_type(data), get_cgi_body(data));
+		waitpid(pid, &exit_status, 0);
+		if (WEXITSTATUS(exit_status) == 1)
+			return (this->Send(client, 500, "text/html", this->BuildErrorPage(500)));
+
+		return (this->Send(client, 200, get_cgi_content_type(data), get_cgi_body(data)));
 	}
 }
-
 
 std::string ServerWeb::GetPath(std::string Line)
 { 
