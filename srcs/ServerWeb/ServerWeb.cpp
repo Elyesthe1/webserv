@@ -445,6 +445,7 @@ void ServerWeb::CGI_GET(const int client, std::string data)
 		Logger::ErrorLog("CGI", "pipe creation failed");
 		return (this->Send(client, 500, "text/html", this->BuildErrorPage(500)));
 	}
+	SetNonBlocking(pipefd[0]);
 
 	pid_t pid = fork();
 	if (pid == -1)
@@ -480,20 +481,57 @@ void ServerWeb::CGI_GET(const int client, std::string data)
 	}
 	else
 	{
-		int exit_status;
-
 		close(pipefd[1]);
 
-		std::string data;
-		char buffer[10 + 1] = {0};
-		while (read(pipefd[0], &buffer, 10) != 0)
+		int epfd = epoll_create(1);
+		if (epfd == -1)
 		{
-			data += buffer;
-			std::fill_n(buffer, 10, 0);
+			close(pipefd[0]);
+			Logger::ErrorLog("CGI", "epoll_create failed");
+			return (this->Send(client, 500, "text/html", this->BuildErrorPage(500)));
 		}
-		close(pipefd[0]);
+
+		struct epoll_event ev;
+		ev.events = EPOLLIN;
+		ev.data.fd = pipefd[0];
+		if (epoll_ctl(epfd, EPOLL_CTL_ADD, pipefd[0], &ev) == -1)
+		{
+			Logger::ErrorLog("CGI", "epoll_ctl failed");
+			close(pipefd[0]);
+			close(epfd);
+			return (this->Send(client, 500, "text/html", this->BuildErrorPage(500)));
+		}
+
+		std::string data;
+		bool reading = true;
+		while (reading)
+		{
+			struct epoll_event events[1];
+			int nfds = epoll_wait(epfd, events, 1, 5000);
+
+			if (nfds == -1)
+			{
+				Logger::ErrorLog("CGI", "epoll_wait failed");
+				break;
+			}
+			else if (nfds == 0)
+			{
+				Logger::ErrorLog("CGI", "epoll_wait timeout");
+				break;
+			}
+
+			char buffer[1024] = {0};
+			ssize_t read_bytes = read(pipefd[0], buffer, sizeof(buffer) - 1);
+			if (read_bytes > 0)
+				data += buffer;
+			else
+				reading = false;			
+		}
 		
+		int exit_status;
 		waitpid(pid, &exit_status, 0);
+		close(pipefd[0]);
+		close(epfd);
 		if (WEXITSTATUS(exit_status) == 1)
 			return (this->Send(client, 500, "text/html", this->BuildErrorPage(500)));
 
