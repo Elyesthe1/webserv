@@ -291,9 +291,8 @@ std::string ServerWeb::get_cgi_file_path(const Route *route, std::string data)
 {
 	std::string file_name;
 	std::string cgi_file_path;
-	int i = (data.rfind("GET", 0) == 0) ? 4 : 5;
 
-	file_name =	this->GetPath(&data[i]).substr(route->path.length());
+	file_name =	get_cgi_path(data).substr(route->path.length());
 	if (file_name.find('/') != std::string::npos)
 		file_name = file_name.substr(1);
 
@@ -336,15 +335,39 @@ char **ServerWeb::build_cgi_argv(std::string cgi_executable, std::string cgi_fil
 	return (argv);
 }
 
-char **ServerWeb::build_cgi_get_envp(std::string cgi_file_path, std::string query_string)
+std::string ServerWeb::get_server_protocol(std::string data)
 {
-	char **envp = new char*[6];
+	std::string server_protocol = data;
+
+	if (server_protocol.find(' ') == std::string::npos)
+		return ("");
+	server_protocol = server_protocol.substr(server_protocol.find(' ') + 1);
+
+	if (server_protocol.find(' ') == std::string::npos)
+		return ("");
+	server_protocol = server_protocol.substr(server_protocol.find(' ') + 1);
+
+	if (server_protocol.find("\r\n") == std::string::npos)
+		return ("");
+	server_protocol = server_protocol.substr(0, server_protocol.find("\r\n"));
+
+	return (server_protocol);
+}
+
+char **ServerWeb::build_cgi_get_envp(std::string cgi_file_path, std::string query_string, std::string data)
+{
+	char **envp = new char*[8];
+
+	std::string server_protocol = get_server_protocol(data);
+	std::string path_info = get_path_info(data);
 
 	envp[0] = new char[std::strlen("CONTENT_TYPE=application/x-www-form-urlencoded") + 1];
 	envp[1] = new char[std::strlen("QUERY_STRING=") + query_string.length() + 1];
 	envp[2] = new char[std::strlen("REQUEST_METHOD=GET") + 1];
 	envp[3] = new char[std::strlen("REDIRECT_STATUS=200") + 1];
 	envp[4] = new char[std::strlen("SCRIPT_FILENAME=") + cgi_file_path.length() + 1];
+	envp[5] = new char[std::strlen("SERVER_PROTOCOL=") + server_protocol.length() + 1];
+	envp[6] = new char[std::strlen("PATH_INFO=") + path_info.length() + 1];
 
 	std::strcpy(envp[0], "CONTENT_TYPE=application/x-www-form-urlencoded");
 	std::strcpy(envp[1], "QUERY_STRING=");
@@ -353,16 +376,24 @@ char **ServerWeb::build_cgi_get_envp(std::string cgi_file_path, std::string quer
 	std::strcpy(envp[3], "REDIRECT_STATUS=200");
 	std::strcpy(envp[4], "SCRIPT_FILENAME=");
 	std::strcat(envp[4], cgi_file_path.c_str());
-	envp[5] = NULL;
+	std::strcpy(envp[5], "SERVER_PROTOCOL=");
+	std::strcat(envp[5], server_protocol.c_str());
+	std::strcpy(envp[6], "PATH_INFO=");
+	std::strcat(envp[6], path_info.c_str());
+
+	envp[7] = NULL;
 
 	return (envp);
 }
 
 
-char **ServerWeb::build_cgi_post_envp(std::string cgi_file_path, std::string query_string, std::string post_data)
+char **ServerWeb::build_cgi_post_envp(std::string cgi_file_path, std::string query_string, std::string data)
 {
-	char **envp = new char*[7];
+	std::string post_data = get_cgi_post_data(data);
+	std::string server_protocol = get_server_protocol(data);
+	char **envp = new char*[8];
 	char *itoa = ft_itoa(post_data.length());
+
 
 	envp[0] = new char[std::strlen("CONTENT_TYPE=application/x-www-form-urlencoded") + 1];
 	envp[1] = new char[std::strlen("QUERY_STRING=") + query_string.length() + 1];
@@ -370,6 +401,8 @@ char **ServerWeb::build_cgi_post_envp(std::string cgi_file_path, std::string que
 	envp[3] = new char[std::strlen("REDIRECT_STATUS=200") + 1];
 	envp[4] = new char[std::strlen("SCRIPT_FILENAME=") + cgi_file_path.length() + 1];
 	envp[5] = new char[std::strlen("CONTENT_LENGTH=") + std::strlen(itoa) + 1];
+	envp[6] = new char[std::strlen("SERVER_PROTOCOL=") + server_protocol.length() + 1];
+
 
 	std::strcpy(envp[0], "CONTENT_TYPE=application/x-www-form-urlencoded");
 	std::strcpy(envp[1], "QUERY_STRING=");
@@ -380,7 +413,9 @@ char **ServerWeb::build_cgi_post_envp(std::string cgi_file_path, std::string que
 	std::strcat(envp[4], cgi_file_path.c_str());
 	std::strcpy(envp[5], "CONTENT_LENGTH=");
 	std::strcat(envp[5], itoa);
-	envp[6] = NULL;
+	std::strcpy(envp[6], "SERVER_PROTOCOL=");
+	std::strcat(envp[6], server_protocol.c_str());
+	envp[7] = NULL;
 
 	free(itoa);
 	return (envp);
@@ -424,10 +459,36 @@ std::string ServerWeb::get_cgi_body(std::string data)
 	return (body);
 }
 
+std::string ServerWeb::get_path_info(std::string data)
+{
+	int i = (data.rfind("GET", 0) == 0) ? 4 : 5;
+	std::string extension = (data.find(".py") != std::string::npos) ? ".py" : ".php";
+	std::string path = this->GetPath(&data[i]);
+
+	if (path.find('?') != std::string::npos)
+		path.substr(0, path.find('?'));
+
+	path = path.substr(path.find(extension) + extension.length());
+
+	return (path);
+}
+
+std::string ServerWeb::get_cgi_path(std::string data)
+{
+	int i = (data.rfind("GET", 0) == 0) ? 4 : 5;
+	std::string extension = (data.find(".py") != std::string::npos) ? ".py" : ".php";
+	std::string path = GetPath(&data[i]);
+
+	path = path.substr(0, path.find(extension) + extension.length());
+
+	return (path);
+}
+
 void ServerWeb::CGI_GET(const int client, std::string data)
 {
 	const std::string cgi_executable = (data.find(".py") != std::string::npos) ? "/usr/bin/python3" : "/usr/bin/php-cgi";
-	const Route *route = this->RouteCheck(this->GetPath(&data[4]), client, "GET");
+	// const std::string cgi_executable = "/home/tovetouc/Desktop/projects/webserv/www/casino/cgi/ubuntu_cgi_teaster";
+	const Route *route = this->RouteCheck(get_cgi_path(data), client, "GET");
 
 	if (!route)
 		return Logger::InfoLog("CGI", "no route found");
@@ -438,6 +499,7 @@ void ServerWeb::CGI_GET(const int client, std::string data)
 	std::ifstream file(cgi_file_path.c_str());
 	if (!file)
 		return (this->Send(client, 404, "text/html", this->BuildErrorPage(404)));
+
 
 	int pipefd[2];
 	if (pipe(pipefd) == -1)
@@ -457,12 +519,11 @@ void ServerWeb::CGI_GET(const int client, std::string data)
 	else if (pid == 0)
 	{
 		char **argv = build_cgi_argv(cgi_executable, cgi_file_path);
-		char **envp = build_cgi_get_envp(cgi_file_path, query_string);
+		char **envp = build_cgi_get_envp(cgi_file_path, query_string, data);
 
 		close(pipefd[0]);
 		dup2(pipefd[1], STDOUT_FILENO);
 		close(pipefd[1]);
-
 		if (execve(cgi_executable.c_str(), argv, envp) == -1)
 		{
 			Logger::ErrorLog("CGI", "execve failed");
@@ -474,6 +535,8 @@ void ServerWeb::CGI_GET(const int client, std::string data)
 			delete[] envp[2];
 			delete[] envp[3];
 			delete[] envp[4];
+			delete[] envp[5];
+			delete[] envp[6];
 			delete[] envp;
 			exit(1);
 		}
@@ -510,7 +573,8 @@ std::string ServerWeb::get_cgi_post_data(std::string data)
 
 void ServerWeb::CGI_POST(const int client, std::string data)
 {
-	const std::string cgi_executable = (data.find(".py") != std::string::npos) ? "/usr/bin/python3" : "/usr/bin/php-cgi";
+	// const std::string cgi_executable = (data.find(".py") != std::string::npos) ? "/usr/bin/python3" : "/usr/bin/php-cgi";
+	const std::string cgi_executable = "/home/tovetouc/Desktop/projects/webserv/www/casino/cgi/ubuntu_cgi_tester";
 	const Route *route = RouteCheck(GetPath(&data[5]), client, "POST");
 
 	if (!route)
@@ -519,6 +583,7 @@ void ServerWeb::CGI_POST(const int client, std::string data)
 	std::string cgi_file_path = get_cgi_file_path(route, data);
 	std::string query_string = get_query_string(data);
 	std::string post_data = get_cgi_post_data(data);
+
 
 	std::ifstream file(cgi_file_path.c_str());
 	if (!file)
@@ -552,7 +617,7 @@ void ServerWeb::CGI_POST(const int client, std::string data)
 	else if (pid == 0)
 	{
 		char **argv = build_cgi_argv(cgi_executable, cgi_file_path);
-		char **envp = build_cgi_post_envp(cgi_file_path, query_string, post_data);
+		char **envp = build_cgi_post_envp(cgi_file_path, query_string, data);
 
 		dup2(in[0], STDIN_FILENO);
 		close(in[0]);

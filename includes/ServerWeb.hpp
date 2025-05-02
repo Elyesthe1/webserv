@@ -64,9 +64,14 @@ class ServerWeb
         std::string get_cgi_file_path(const Route *route, std::string data);
         std::string get_query_string(std::string data);
         char **build_cgi_argv(std::string cgi_executable, std::string cgi_file_path);
-        char **build_cgi_get_envp(std::string cgi_file_path, std::string query_string);
+        char **build_cgi_get_envp(std::string cgi_file_path, std::string query_string, std::string data);
         std::string get_cgi_content_type(std::string data);
         std::string get_cgi_body(std::string data);
         std::string get_cgi_post_data(std::string data);
-        char **build_cgi_post_envp(std::string cgi_file_path, std::string query_string, std::string post_data);
+        char **build_cgi_post_envp(std::string cgi_file_path, std::string query_string, std::string data);
+        std::string get_server_protocol(std::string data);
+        std::string get_path_info(std::string data);
+        std::string get_cgi_path(std::string data);
+
+
 };
