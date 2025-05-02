@@ -391,7 +391,8 @@ char **ServerWeb::build_cgi_post_envp(std::string cgi_file_path, std::string que
 {
 	std::string post_data = get_cgi_post_data(data);
 	std::string server_protocol = get_server_protocol(data);
-	char **envp = new char*[8];
+	std::string path_info = get_path_info(data);
+	char **envp = new char*[9];
 	char *itoa = ft_itoa(post_data.length());
 
 
@@ -402,6 +403,8 @@ char **ServerWeb::build_cgi_post_envp(std::string cgi_file_path, std::string que
 	envp[4] = new char[std::strlen("SCRIPT_FILENAME=") + cgi_file_path.length() + 1];
 	envp[5] = new char[std::strlen("CONTENT_LENGTH=") + std::strlen(itoa) + 1];
 	envp[6] = new char[std::strlen("SERVER_PROTOCOL=") + server_protocol.length() + 1];
+	envp[7] = new char[std::strlen("PATH_INFO=") + path_info.length() + 1];
+
 
 
 	std::strcpy(envp[0], "CONTENT_TYPE=application/x-www-form-urlencoded");
@@ -415,7 +418,10 @@ char **ServerWeb::build_cgi_post_envp(std::string cgi_file_path, std::string que
 	std::strcat(envp[5], itoa);
 	std::strcpy(envp[6], "SERVER_PROTOCOL=");
 	std::strcat(envp[6], server_protocol.c_str());
-	envp[7] = NULL;
+	std::strcpy(envp[7], "PATH_INFO=");
+	std::strcat(envp[7], path_info.c_str());
+
+	envp[8] = NULL;
 
 	free(itoa);
 	return (envp);
@@ -423,22 +429,22 @@ char **ServerWeb::build_cgi_post_envp(std::string cgi_file_path, std::string que
 
 std::string	ServerWeb::get_cgi_content_type(std::string data)
 {
-	std::string first_line = data.substr(0, data.find('\n'));
-	std::string	content_type;
+	std::string lowercase = data;
+	std::string	content_type = data;
 
-	std::transform(first_line.begin(), first_line.end(), first_line.begin(), to_lower);
-	if (first_line.find("content-type:") == std::string::npos)
+	std::transform(lowercase.begin(), lowercase.end(), lowercase.begin(), to_lower);
+	if (lowercase.find("content-type:") == std::string::npos)
 		return ("text/html");
 	
-	content_type = data.substr(0, data.find('\n'));
-	content_type = content_type.substr(first_line.find("content-type:"));
+	content_type = content_type.substr(lowercase.find("content-type:"));
 	content_type = content_type.substr(std::strlen("content-type:"));
 
 	int i = 0;
 	while (content_type[i] && content_type[i] == ' ')
 		++i;
 	content_type = content_type.substr(i);
-
+	content_type = content_type.substr(0, content_type.find('\n'));
+	
 	return (content_type);
 }
 
@@ -487,7 +493,7 @@ std::string ServerWeb::get_cgi_path(std::string data)
 void ServerWeb::CGI_GET(const int client, std::string data)
 {
 	const std::string cgi_executable = (data.find(".py") != std::string::npos) ? "/usr/bin/python3" : "/usr/bin/php-cgi";
-	// const std::string cgi_executable = "/home/tovetouc/Desktop/projects/webserv/www/casino/cgi/ubuntu_cgi_teaster";
+	// const std::string cgi_executable = "/home/tovetouc/Desktop/projects/webserv/www/casino/cgi/ubuntu_cgi_tester";
 	const Route *route = this->RouteCheck(get_cgi_path(data), client, "GET");
 
 	if (!route)
@@ -549,13 +555,13 @@ void ServerWeb::CGI_GET(const int client, std::string data)
 
 		std::string data;
 		char buffer[10 + 1] = {0};
+
 		while (read(pipefd[0], &buffer, 10) != 0)
 		{
 			data += buffer;
 			std::fill_n(buffer, 10, 0);
 		}
 		close(pipefd[0]);
-		
 		waitpid(pid, &exit_status, 0);
 		if (WEXITSTATUS(exit_status) == 1)
 			return (this->Send(client, 500, "text/html", this->BuildErrorPage(500)));
@@ -573,8 +579,8 @@ std::string ServerWeb::get_cgi_post_data(std::string data)
 
 void ServerWeb::CGI_POST(const int client, std::string data)
 {
-	// const std::string cgi_executable = (data.find(".py") != std::string::npos) ? "/usr/bin/python3" : "/usr/bin/php-cgi";
-	const std::string cgi_executable = "/home/tovetouc/Desktop/projects/webserv/www/casino/cgi/ubuntu_cgi_tester";
+	const std::string cgi_executable = (data.find(".py") != std::string::npos) ? "/usr/bin/python3" : "/usr/bin/php-cgi";
+	// const std::string cgi_executable = "/home/tovetouc/Desktop/projects/webserv/www/casino/cgi/ubuntu_cgi_tester";
 	const Route *route = RouteCheck(GetPath(&data[5]), client, "POST");
 
 	if (!route)
