@@ -16,6 +16,10 @@
 #include <algorithm>
 #include <sys/types.h>
 #include <dirent.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include "ServManager.hpp"
+
 #define READ_BUFFER 4096
 #define NOT_FOUND_404 "<html><body><h1>404 Not Found</h1><p>Page introuvable</p></body></html>"
 #define BodyTooLarge "<html><head><meta charset=\"UTF-8\"><title>413 Payload Too Large</title></head><body><h1>413 - Payload Too Large</h1><p>Le corps de la requête dépasse la taille autorisée.</p></body></html>"
@@ -25,9 +29,12 @@
 #define METHOD_NOT_ALLOWED "<html><body><h1>🚫 Erreur 405</h1><p>La méthode HTTP utilisée n'est pas autorisée pour cette ressource.</p></body></html>"
 #define NOT_IMPLEMENTED "<html><body><h1>🛠️ Erreur 501</h1><p>La méthode HTTP utilisée n'est pas reconnue ou non prise en charge par ce serveur.</p></body></html>"
 
+const   std::string intTostring(const int n);
+bool    IsDirectory(const std::string& path);
+char    to_lower(char c);
+char    *ft_itoa(int n);
+int     string_to_int(const std::string str);
 
-const std::string intTostring(const int n);
-bool IsDirectory(const std::string& path);
 class ServerWeb
 {
     public:
@@ -42,7 +49,6 @@ class ServerWeb
         std::string BuildErrorPage(const int status);
         std::string GetPath(std::string Line);
         void PostMethod(std::string path, std::string body, const int Client);
-        void CGIMethod(std::string path, const int Client);
         void GetMethod(std::string Line, const int Client, std::string &Data);
         void DeleteMethod(std::string Line, const int Client);
         bool CheckBodyLimit(std::string Data);
@@ -54,4 +60,19 @@ class ServerWeb
         std::string GetContentType(const std::string& path);
         int  IsRequestComplete(const std::string& request);
         bool CookieHandler(std::string &Data);
+        void CGI_GET(const int client, std::string data);
+        void CGI_POST(const int client, std::string data);
+        std::string get_cgi_file_path(const Route *route, std::string data);
+        std::string get_query_string(std::string data);
+        char **build_cgi_argv(std::string cgi_executable, std::string cgi_file_path);
+        char **build_cgi_get_envp(std::string cgi_file_path, std::string query_string, std::string data);
+        std::string get_cgi_content_type(std::string data);
+        std::string get_cgi_body(std::string data);
+        std::string get_cgi_post_data(std::string data);
+        char **build_cgi_post_envp(std::string cgi_file_path, std::string query_string, std::string data);
+        std::string get_server_protocol(std::string data);
+        std::string get_path_info(std::string data);
+        std::string get_cgi_path(std::string data);
+        int get_cgi_status_code(std::string data);
+        int get_cgi_content_length(std::string data);
 };

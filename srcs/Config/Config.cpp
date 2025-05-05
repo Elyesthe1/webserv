@@ -105,15 +105,13 @@ void Config::DefaultConf()
     uploads.upload = "www/casino/uploads";
     uploads.methods.push_back("POST");
 
-    
-
     Route redirect;
     redirect.path = "/redirect";
     redirect.redirection = "https://www.google.com";
 
     Route cgi;
-    cgi.path = "/cgi-bin/";
-    cgi.root = "/var/www/cgi-bin";
+    cgi.path = "/cgi-bin";
+    cgi.root = "www/casino/cgi";
     cgi.methods.push_back("GET");
     cgi.methods.push_back("POST");
 
