@@ -33,6 +33,7 @@ const   std::string intTostring(const int n);
 bool    IsDirectory(const std::string& path);
 char    to_lower(char c);
 char    *ft_itoa(int n);
+int     string_to_int(const std::string str);
 
 class ServerWeb
 {
@@ -72,6 +73,6 @@ class ServerWeb
         std::string get_server_protocol(std::string data);
         std::string get_path_info(std::string data);
         std::string get_cgi_path(std::string data);
-
-
+        int get_cgi_status_code(std::string data);
+        int get_cgi_content_length(std::string data);
 };

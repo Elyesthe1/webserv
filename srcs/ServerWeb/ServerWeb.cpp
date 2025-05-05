@@ -448,20 +448,92 @@ std::string	ServerWeb::get_cgi_content_type(std::string data)
 	return (content_type);
 }
 
+int ServerWeb::get_cgi_status_code(std::string data)
+{
+	std::string lowercase = data;
+	std::string	status_code = data;
+
+	std::transform(lowercase.begin(), lowercase.end(), lowercase.begin(), to_lower);
+	if (lowercase.find("status:") == std::string::npos)
+		return (200);
+	
+	status_code = status_code.substr(lowercase.find("status:"));
+	status_code = status_code.substr(std::strlen("status:"));
+
+	int i = 0;
+	while (status_code[i] && status_code[i] == ' ')
+		++i;
+	status_code = status_code.substr(i);
+	status_code = status_code.substr(0, status_code.find('\n'));
+	
+	return (string_to_int(status_code));
+}
+
+int ServerWeb::get_cgi_content_length(std::string data)
+{
+	std::string lowercase = data;
+	std::string	content_length = data;
+
+	std::transform(lowercase.begin(), lowercase.end(), lowercase.begin(), to_lower);
+	if (lowercase.find("content-length:") == std::string::npos)
+		return (-1);
+	
+	content_length = content_length.substr(lowercase.find("content-length:"));
+	content_length = content_length.substr(std::strlen("content-length:"));
+
+	int i = 0;
+	while (content_length[i] && content_length[i] == ' ')
+		++i;
+	content_length = content_length.substr(i);
+	content_length = content_length.substr(0, content_length.find('\n'));
+	
+	return (string_to_int(content_length));
+}
+
 std::string ServerWeb::get_cgi_body(std::string data)
 {
-	std::string first_line = data.substr(0, data.find('\n'));
+	int content_length = -1;
 	std::string body = data;
+	std::string first_line = body.substr(0, data.find('\n'));
 
 	std::transform(first_line.begin(), first_line.end(), first_line.begin(), to_lower);
-	if (first_line.find("content-type:") != std::string::npos)
-		body = body.substr(std::strlen(first_line.c_str()));
+	
+	while (first_line.find("content-type:") != std::string::npos
+		|| first_line.find("status:") != std::string::npos
+		|| first_line.find("content-length:") != std::string::npos)
+	{
+		if (first_line.find("content-type:") != std::string::npos)
+		{
+			body = body.substr(first_line.length() + 1);
+			first_line = body.substr(0, body.find('\n'));
+			std::transform(first_line.begin(), first_line.end(), first_line.begin(), to_lower);
+			continue;
+		}
+		else if (first_line.find("status:") != std::string::npos)
+		{
+			body = body.substr(first_line.length() + 1);
+			first_line = body.substr(0, body.find('\n'));
+			std::transform(first_line.begin(), first_line.end(), first_line.begin(), to_lower);
+			continue;
+		}
+		else if (first_line.find("content-length:") != std::string::npos)
+		{
+			content_length = get_cgi_content_length(first_line);
+			body = body.substr(first_line.length() + 1);
+			first_line = body.substr(0, body.find('\n'));
+			std::transform(first_line.begin(), first_line.end(), first_line.begin(), to_lower);
+			continue;
+		}
+	}
 
 	int i = 0;
 	while (body[i] && body[i] == '\n')
 		++i;
-	
 	body = body.substr(i);
+
+	if (content_length != -1 && body.length() > static_cast<unsigned long>(content_length))
+		body = body.substr(0, content_length);
+
 	return (body);
 }
 
@@ -493,7 +565,6 @@ std::string ServerWeb::get_cgi_path(std::string data)
 void ServerWeb::CGI_GET(const int client, std::string data)
 {
 	const std::string cgi_executable = (data.find(".py") != std::string::npos) ? "/usr/bin/python3" : "/usr/bin/php-cgi";
-	// const std::string cgi_executable = "/home/tovetouc/Desktop/projects/webserv/www/casino/cgi/ubuntu_cgi_tester";
 	const Route *route = this->RouteCheck(get_cgi_path(data), client, "GET");
 
 	if (!route)
@@ -566,7 +637,7 @@ void ServerWeb::CGI_GET(const int client, std::string data)
 		if (WEXITSTATUS(exit_status) == 1)
 			return (this->Send(client, 500, "text/html", this->BuildErrorPage(500)));
 
-		return (this->Send(client, 200, get_cgi_content_type(data), get_cgi_body(data)));
+		return (this->Send(client, get_cgi_status_code(data), get_cgi_content_type(data), get_cgi_body(data)));
 	}
 }
 
@@ -580,7 +651,6 @@ std::string ServerWeb::get_cgi_post_data(std::string data)
 void ServerWeb::CGI_POST(const int client, std::string data)
 {
 	const std::string cgi_executable = (data.find(".py") != std::string::npos) ? "/usr/bin/python3" : "/usr/bin/php-cgi";
-	// const std::string cgi_executable = "/home/tovetouc/Desktop/projects/webserv/www/casino/cgi/ubuntu_cgi_tester";
 	const Route *route = RouteCheck(GetPath(&data[5]), client, "POST");
 
 	if (!route)
@@ -672,7 +742,7 @@ void ServerWeb::CGI_POST(const int client, std::string data)
 		if (WEXITSTATUS(exit_status) == 1)
 			return (this->Send(client, 500, "text/html", this->BuildErrorPage(500)));
 
-		return (this->Send(client, 200, get_cgi_content_type(data), get_cgi_body(data)));
+		return (this->Send(client, get_cgi_status_code(data), get_cgi_content_type(data), get_cgi_body(data)));
 	}
 }
 

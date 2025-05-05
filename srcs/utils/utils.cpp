@@ -24,6 +24,16 @@ const std::string intTostring(const int n)
 	return os.str();
 }
 
+int string_to_int(const std::string str)
+{
+	int number = 0;
+
+	std::stringstream ss(str);
+	ss >> number;
+
+	return (number);
+}
+
 void SetNonBlocking(const int fd)
 {
     int flag = fcntl(fd, F_GETFL, 0);

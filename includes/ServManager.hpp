@@ -47,5 +47,4 @@ class ServManager
         void ManageSignals(const bool flag);
         void InitLoop();
 
-
 };
