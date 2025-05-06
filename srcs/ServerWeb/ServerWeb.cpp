@@ -393,7 +393,7 @@ char **ServerWeb::build_cgi_post_envp(std::string cgi_file_path, std::string que
 	std::string server_protocol = get_server_protocol(data);
 	std::string path_info = get_path_info(data);
 	char **envp = new char*[9];
-	char *itoa = ft_itoa(post_data.length());
+	std::string itoa = intTostring(post_data.length());
 
 
 	envp[0] = new char[std::strlen("CONTENT_TYPE=application/x-www-form-urlencoded") + 1];
@@ -401,7 +401,7 @@ char **ServerWeb::build_cgi_post_envp(std::string cgi_file_path, std::string que
 	envp[2] = new char[std::strlen("REQUEST_METHOD=POST") + 1];
 	envp[3] = new char[std::strlen("REDIRECT_STATUS=200") + 1];
 	envp[4] = new char[std::strlen("SCRIPT_FILENAME=") + cgi_file_path.length() + 1];
-	envp[5] = new char[std::strlen("CONTENT_LENGTH=") + std::strlen(itoa) + 1];
+	envp[5] = new char[std::strlen("CONTENT_LENGTH=") + std::strlen(itoa.c_str()) + 1];
 	envp[6] = new char[std::strlen("SERVER_PROTOCOL=") + server_protocol.length() + 1];
 	envp[7] = new char[std::strlen("PATH_INFO=") + path_info.length() + 1];
 
@@ -415,15 +415,13 @@ char **ServerWeb::build_cgi_post_envp(std::string cgi_file_path, std::string que
 	std::strcpy(envp[4], "SCRIPT_FILENAME=");
 	std::strcat(envp[4], cgi_file_path.c_str());
 	std::strcpy(envp[5], "CONTENT_LENGTH=");
-	std::strcat(envp[5], itoa);
+	std::strcat(envp[5], itoa.c_str());
 	std::strcpy(envp[6], "SERVER_PROTOCOL=");
 	std::strcat(envp[6], server_protocol.c_str());
 	std::strcpy(envp[7], "PATH_INFO=");
 	std::strcat(envp[7], path_info.c_str());
 
 	envp[8] = NULL;
-
-	free(itoa);
 	return (envp);
 }
 
@@ -756,7 +754,7 @@ std::string ServerWeb::GetPath(std::string Line)
 
 void ServerWeb::RequestParsing(std::string Request, const int Client)
 {
-	std::cout << Request << std::endl;
+	// std::cout << Request << std::endl;
 	if (!std::strncmp(Request.c_str(), "GET", 3))
 	{
 		if(Request.find(".py") != std::string::npos || Request.find(".php") != std::string::npos)

@@ -32,7 +32,6 @@
 const   std::string intTostring(const int n);
 bool    IsDirectory(const std::string& path);
 char    to_lower(char c);
-char    *ft_itoa(int n);
 int     string_to_int(const std::string str);
 
 class ServerWeb
