@@ -158,9 +158,12 @@ void trim(std::string &s) {
 
 std::vector<std::string> splitWS(const std::string &s) {
 	std::stringstream ss(s);
-	std::string tok; std::vector<std::string> out;
-	while (ss >> tok) out.push_back(tok);
-	return out;
+	std::string tok;
+	std::vector<std::string> out;
+	
+	while (ss >> tok)
+		out.push_back(tok);
+	return (out);
 }
 
 void Config::ParseFile(std::ifstream &file)
