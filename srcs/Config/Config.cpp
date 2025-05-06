@@ -1,4 +1,5 @@
 #include "../../includes/Config.hpp"
+#include <sstream>
 
 int Config::How_Much_Server = 0;
 
@@ -147,7 +148,7 @@ void Config::OpenFile(int ac, char **av)
 		this->DefaultConf();
 }
 
-void trim(std::string &s) {
+static void trim(std::string &s) {
 	size_t beg = s.find_first_not_of(" \t\r\n");
 	size_t end = s.find_last_not_of(" \t\r\n");
 	if (beg == std::string::npos)
@@ -156,11 +157,11 @@ void trim(std::string &s) {
 		s = s.substr(beg, end - beg + 1);
 }
 
-std::vector<std::string> splitWS(const std::string &s) {
+static std::vector<std::string> splitWS(const std::string &s) {
 	std::stringstream ss(s);
 	std::string tok;
 	std::vector<std::string> out;
-	
+
 	while (ss >> tok)
 		out.push_back(tok);
 	return (out);
