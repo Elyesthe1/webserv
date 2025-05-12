@@ -10,7 +10,7 @@
 
   <section>
     <h2>GET CGI Test</h2>
-    <form action="/cgi-bin/get.py" method="get">
+    <form action="/cgi-bin/form-handler.py" method="get">
       <label for="name">Your Name:</label>
       <input type="text" name="name" id="name">
       <button type="submit">Send</button>
@@ -19,9 +19,9 @@
 
   <section>
     <h2>POST CGI Test</h2>
-    <form action="/cgi-bin/post.py" method="post">
-      <label for="email">Email:</label>
-      <input type="email" name="email" id="email">
+    <form action="/cgi-bin/form-handler.py" method="post">
+      <label for="name">name:</label>
+      <input type="text" name="name" id="name">
       <button type="submit">Send</button>
     </form>
   </section>
@@ -35,11 +35,6 @@
         <button type="submit">Upload</button>
       </form>
     </div>
-  </section>
-
-  <section>
-    <h2>Blackjack</h2>
-    <a href="/blackjack/index.html">Play Blackjack</a>
   </section>
 
   <script src="/static/script.js"></script>

@@ -754,7 +754,6 @@ std::string ServerWeb::GetPath(std::string Line)
 
 void ServerWeb::RequestParsing(std::string Request, const int Client)
 {
-	// std::cout << Request << std::endl;
 	if (!std::strncmp(Request.c_str(), "GET", 3))
 	{
 		if(Request.find(".py") != std::string::npos || Request.find(".php") != std::string::npos)

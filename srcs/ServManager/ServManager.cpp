@@ -237,6 +237,6 @@ void ServManager::ClientHandler(const struct epoll_event &events)
 	}
 	catch (const std::exception &e)
 	{
-		Logger::WarningLog("ClientHandler", "Problem to handle client due to: " + std::string(e.what()));
+			Logger::WarningLog("ClientHandler", "Problem to handle client due to: " + std::string(e.what()));
 	}
 }

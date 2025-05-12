@@ -1,0 +1,21 @@
+// interdiction  d exit tout les objet doit appeller leur destructeur 
+
+
+parsing le faire en mode dico: key=value ❌ // si une erreur on lance rien nique 
+Faire les CGI GET + POST py et php ❌
+faire que le serv reponde a selon le bon host designe ✅
+cookie ✅
+MAX BODY A FAIRE ✅
+multiserver ✅
+Setup des routes avec une ou plusieurs des règles/configurations suivante // faire un objet conf a part fair un for dans le main ect...
+    ◦ Définir une liste de méthodes HTTP acceptées pour la route. ✅
+    ◦ Définir une redirection HTTP. r ✅
+    ◦ Activer ou désactiver le listing des répertoires. ✅
+    ◦ Rendre la route capable d’accepter les fichiers téléversés et configurer où cela r ✅
+    doit être enregistré.
+
+// FAIRE ATTENDION DE PAS AVOIR UN THROW POUR UNE WARNING QUI FAIT QUITTER LE PROGRAM
+
+sudo chattr +i (arg) enlever les droit de suppresion dun fichier -i inverse
+
+// oe pas sure de le faire en fait faire un makefile qui regroupe les .o dans un dossier obj
